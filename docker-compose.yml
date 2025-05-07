@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: paxcanina-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: paxcanina_db
+      MYSQL_USER: paxuser
+      MYSQL_PASSWORD: paxpw
+      MYSQL_ROOT_PASSWORD: rootpw
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:

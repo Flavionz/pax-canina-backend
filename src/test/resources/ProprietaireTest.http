@@ -1,0 +1,11 @@
+### Enregistrement nouveau propriétaire
+POST http://localhost:8080/api/proprietaires/register
+Content-Type: application/json
+
+{
+  "nom": "Testop",
+  "prenom": "Mario",
+  "email": "mario.test@paxcanina.com",
+  "passwordHash": "mypassword",
+  "telephone": "0611223344"
+}
