@@ -34,6 +34,9 @@ public class Chien {
     @Column(name = "photo_url")
     private String photoUrl;
 
+    @Column(name = "numero_puce")
+    private String numeroPuce;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_proprietaire", nullable = false)
     private Proprietaire proprietaire;

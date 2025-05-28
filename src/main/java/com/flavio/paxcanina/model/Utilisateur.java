@@ -9,15 +9,14 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-
-
 @Getter
 @Setter
 @Entity
 @Table(name = "utilisateur")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@Inheritance(strategy = InheritanceType.JOINED)
 @DiscriminatorColumn(name = "type_utilisateur", discriminatorType = DiscriminatorType.STRING)
-public class Utilisateur {
+public abstract class Utilisateur {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_utilisateur")
@@ -31,7 +30,7 @@ public class Utilisateur {
 
     @NotBlank
     @Email
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     protected String email;
 
     @Column(name = "password_hash")
@@ -45,4 +44,19 @@ public class Utilisateur {
 
     @Column(name = "last_login")
     protected LocalDateTime lastLogin;
+
+    @Transient
+    public String getRole() {
+        return this.getClass().getSimpleName().toUpperCase();
+    }
+
+    @Transient
+    public String getPassword() {
+        return this.passwordHash;
+    }
+
+    @Transient
+    public void setPassword(String password) {
+        this.passwordHash = password;
+    }
 }
