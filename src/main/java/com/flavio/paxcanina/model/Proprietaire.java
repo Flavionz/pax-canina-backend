@@ -3,7 +3,10 @@ package com.flavio.paxcanina.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -27,10 +30,10 @@ public class Proprietaire extends Utilisateur {
     private String avatarUrl;
 
     // Un proprietario può avere molti cani
-    @OneToMany(mappedBy = "proprietaire", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Chien> chiens;
+    @OneToMany(mappedBy = "proprietaire", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private Set<Chien> chiens = new HashSet<>();
 
-    // Se vuoi, puoi aggiungere un campo per tenere traccia delle iscrizioni (opzionale, vedi nota sotto)
+    // (Opzionale) Se vuoi tracciare tutte le iscrizioni fatte dal proprietario
     // @OneToMany(mappedBy = "proprietaire", cascade = CascadeType.ALL, orphanRemoval = true)
     // private List<Inscription> inscriptions;
 

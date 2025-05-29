@@ -8,4 +8,5 @@ public interface ProprietaireService {
     Proprietaire register(Proprietaire proprietaire);
     List<Proprietaire> findAll();
     Proprietaire findById(Integer id);
+    Proprietaire findByIdWithChiensAndInscriptions(Integer id);
 }

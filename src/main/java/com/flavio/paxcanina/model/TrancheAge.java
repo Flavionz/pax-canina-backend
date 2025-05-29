@@ -3,7 +3,6 @@ package com.flavio.paxcanina.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import java.util.List;
 
 @Getter
 @Setter
@@ -25,9 +24,9 @@ public class TrancheAge {
     @Column(name = "age_max")
     private Integer ageMax;
 
-    // Relazione inversa opzionale (non obbligatoria per funzionare)
-    @ManyToMany(mappedBy = "tranchesAge")
-    private List<Cours> cours;
+    // (Opzionale) Relazione inversa con Session
+    // @OneToMany(mappedBy = "trancheAge")
+    // private List<Session> sessions;
 
     public TrancheAge() {}
 }

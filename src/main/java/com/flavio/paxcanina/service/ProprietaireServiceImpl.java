@@ -40,4 +40,9 @@ public class ProprietaireServiceImpl implements ProprietaireService {
     public Proprietaire findById(Integer id) {
         return proprietaireDao.findById(id).orElse(null);
     }
+
+    @Override
+    public Proprietaire findByIdWithChiensAndInscriptions(Integer id) {
+        return proprietaireDao.findByIdWithChiensAndInscriptions(id).orElse(null);
+    }
 }

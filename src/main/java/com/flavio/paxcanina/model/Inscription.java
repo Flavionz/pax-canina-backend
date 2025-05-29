@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Getter
 @Setter
@@ -30,23 +29,20 @@ public class Inscription {
     @Column(name = "motif_annulation")
     private String motifAnnulation;
 
-    // Una iscrizione può riguardare più cani (tramite PARTICIPE)
-    @ManyToMany
-    @JoinTable(
-            name = "participe",
-            joinColumns = @JoinColumn(name = "id_inscription"),
-            inverseJoinColumns = @JoinColumn(name = "id_chien")
-    )
-    private List<Chien> chiens;
+    // Ogni iscrizione riguarda UN cane
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_chien", nullable = false)
+    private Chien chien;
 
-    // Una iscrizione può essere legata a più sessioni (tramite CONTIENT)
-    @ManyToMany
-    @JoinTable(
-            name = "contient",
-            joinColumns = @JoinColumn(name = "id_inscription"),
-            inverseJoinColumns = @JoinColumn(name = "id_session")
-    )
-    private List<Session> sessions;
+    // Ogni iscrizione riguarda UNA sessione
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_session", nullable = false)
+    private Session session;
+
+    // (Opzionale) Proprietario che ha effettuato l'iscrizione
+    // @ManyToOne(fetch = FetchType.LAZY)
+    // @JoinColumn(name = "id_proprietaire")
+    // private Proprietaire proprietaire;
 
     public Inscription() {}
 }

@@ -27,31 +27,8 @@ public class ProprietaireController {
         this.proprietaireService = proprietaireService;
     }
 
-    @PostMapping("/register")
-    public ResponseEntity<Proprietaire> register(@RequestBody Proprietaire proprietaire) {
-        try {
-            Proprietaire saved = proprietaireService.register(proprietaire);
-            return ResponseEntity.ok(saved);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
+    // ... altri endpoint ...
 
-    @GetMapping
-    public List<Proprietaire> getAll() {
-        return proprietaireService.findAll();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Proprietaire> getById(@PathVariable Integer id) {
-        Proprietaire proprietaire = proprietaireService.findById(id);
-        if (proprietaire == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(proprietaire);
-    }
-
-    // ====== ENDPOINT PROFILO PROPRIETARIO AUTENTICATO ======
     @GetMapping("/me")
     public ResponseEntity<ProfilProprietaireDto> getMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
@@ -64,7 +41,11 @@ public class ProprietaireController {
             return ResponseEntity.status(403).build();
         }
 
-        Proprietaire proprietaire = (Proprietaire) utilisateur;
+        // Carica il proprietario con cani e iscrizioni (QUERY CUSTOM!)
+        Proprietaire proprietaire = proprietaireService.findByIdWithChiensAndInscriptions(utilisateur.getIdUtilisateur());
+        if (proprietaire == null) {
+            return ResponseEntity.notFound().build();
+        }
 
         // Mapping da Proprietaire a ProfilProprietaireDto
         ProfilProprietaireDto dto = new ProfilProprietaireDto();
@@ -110,10 +91,9 @@ public class ProprietaireController {
         List<InscriptionDto> inscriptionsDto = allInscriptions.stream().map(insc -> {
             InscriptionDto i = new InscriptionDto();
             i.setId(insc.getIdInscription());
-            // Esempio: nome del corso della sessione principale (se presente)
             i.setActivity(
-                    (insc.getSessions() != null && !insc.getSessions().isEmpty() && insc.getSessions().get(0).getCours() != null)
-                            ? insc.getSessions().get(0).getCours().getNom()
+                    (insc.getSession() != null && insc.getSession().getCours() != null)
+                            ? insc.getSession().getCours().getNom()
                             : null
             );
             i.setDate(insc.getDateInscription());

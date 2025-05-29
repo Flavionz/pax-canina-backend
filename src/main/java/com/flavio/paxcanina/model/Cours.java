@@ -3,8 +3,7 @@ package com.flavio.paxcanina.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -26,41 +25,13 @@ public class Cours {
     @Column(name = "statut")
     private String statut;
 
-    @Column(name = "capacite_max")
-    private Integer capaciteMax;
-
-    @Column(name = "niveau")
-    private String niveau;
-
     // Un corso può avere molte sessioni
     @OneToMany(mappedBy = "cours", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Session> sessions;
+    private Set<Session> sessions;
 
-    // Un corso può essere categorizzato in più tipi (ManyToMany con TypeCours)
-    @ManyToMany
-    @JoinTable(
-            name = "categorise",
-            joinColumns = @JoinColumn(name = "id_cours"),
-            inverseJoinColumns = @JoinColumn(name = "id_type_cours")
-    )
-    private List<TypeCours> types;
-
-    // Un corso può corrispondere a più fasce d'età (ManyToMany con TrancheAge)
-    @ManyToMany
-    @JoinTable(
-            name = "correspond",
-            joinColumns = @JoinColumn(name = "id_cours"),
-            inverseJoinColumns = @JoinColumn(name = "id_tranche")
-    )
-    private List<TrancheAge> tranchesAge;
-
-    // Relazione con Admin che crea il corso (opzionale, da implementare in futuro)
+    // (Opzionale) Relazione con Admin creatore del corso
     // @ManyToOne
-    // @JoinTable(
-    //     name = "cree_cours",
-    //     joinColumns = @JoinColumn(name = "id_cours"),
-    //     inverseJoinColumns = @JoinColumn(name = "id_utilisateur")
-    // )
+    // @JoinColumn(name = "id_admin")
     // private Admin adminCreateur;
 
     public Cours() {}

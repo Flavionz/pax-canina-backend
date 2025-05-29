@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -41,34 +42,16 @@ public class Chien {
     @Column(name = "poids")
     private Double poids;
 
-
-    // Un cane ha UN solo proprietario
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_utilisateur", nullable = false)
     private Proprietaire proprietaire;
 
-    // Un cane ha UNA sola razza
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_race", nullable = false)
     private Race race;
 
-    // Un cane può partecipare a più sessioni (ma solo una volta per sessione)
-    @ManyToMany
-    @JoinTable(
-            name = "participe",
-            joinColumns = @JoinColumn(name = "id_chien"),
-            inverseJoinColumns = @JoinColumn(name = "id_session")
-    )
-    private List<Session> sessions;
-
-    @ManyToMany
-    @JoinTable(
-            name = "participe",
-            joinColumns = @JoinColumn(name = "id_chien"),
-            inverseJoinColumns = @JoinColumn(name = "id_inscription")
-    )
-    private List<Inscription> inscriptions;
-
+    @OneToMany(mappedBy = "chien", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Inscription> inscriptions = new ArrayList<>();
 
     public Chien() {}
 }
