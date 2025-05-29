@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.util.List;
+
 @Getter
 @Setter
 @Entity
@@ -15,13 +18,35 @@ public class Inscription {
     @Column(name = "id_inscription")
     private Integer idInscription;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_session", nullable = false)
-    private Session session;
+    @Column(name = "date_inscription", nullable = false)
+    private LocalDate dateInscription;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_chien", nullable = false)
-    private Chien chien;
+    @Column(name = "status")
+    private String status;
+
+    @Column(name = "date_annulation")
+    private LocalDate dateAnnulation;
+
+    @Column(name = "motif_annulation")
+    private String motifAnnulation;
+
+    // Una iscrizione può riguardare più cani (tramite PARTICIPE)
+    @ManyToMany
+    @JoinTable(
+            name = "participe",
+            joinColumns = @JoinColumn(name = "id_inscription"),
+            inverseJoinColumns = @JoinColumn(name = "id_chien")
+    )
+    private List<Chien> chiens;
+
+    // Una iscrizione può essere legata a più sessioni (tramite CONTIENT)
+    @ManyToMany
+    @JoinTable(
+            name = "contient",
+            joinColumns = @JoinColumn(name = "id_inscription"),
+            inverseJoinColumns = @JoinColumn(name = "id_session")
+    )
+    private List<Session> sessions;
 
     public Inscription() {}
 }

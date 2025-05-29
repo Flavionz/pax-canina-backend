@@ -22,34 +22,39 @@ public abstract class Utilisateur {
     @Column(name = "id_utilisateur")
     protected Integer idUtilisateur;
 
-    @Column(name = "nom")
+    @NotBlank
+    @Column(name = "nom", nullable = false)
     protected String nom;
 
-    @Column(name = "prenom")
+    @NotBlank
+    @Column(name = "prenom", nullable = false)
     protected String prenom;
 
     @NotBlank
     @Email
-    @Column(name = "email", unique = true)
+    @Column(name = "email", unique = true, nullable = false)
     protected String email;
 
-    @Column(name = "password_hash")
+    @NotBlank
+    @Column(name = "password_hash", nullable = false)
     protected String passwordHash;
 
     @Column(name = "telephone")
     protected String telephone;
 
-    @Column(name = "date_inscription")
+    @Column(name = "date_inscription", nullable = false)
     protected LocalDate dateInscription;
 
     @Column(name = "last_login")
     protected LocalDateTime lastLogin;
 
+    // Restituisce il ruolo in base al tipo di classe figlia
     @Transient
     public String getRole() {
         return this.getClass().getSimpleName().toUpperCase();
     }
 
+    // Getter e setter per la password (hash)
     @Transient
     public String getPassword() {
         return this.passwordHash;
