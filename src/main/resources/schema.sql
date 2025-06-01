@@ -53,7 +53,8 @@ CREATE TABLE IF NOT EXISTS cours (
                                      id_cours INT AUTO_INCREMENT PRIMARY KEY,
                                      nom VARCHAR(100) NOT NULL,
     description TEXT,
-    statut VARCHAR(50)
+    statut VARCHAR(50),
+    img_url VARCHAR(255) -- nuovo campo per immagine presentazione
     );
 
 -- Association cours <-> specialisation (requiert_specialisation)
@@ -83,9 +84,10 @@ CREATE TABLE IF NOT EXISTS session (
     capacite_max INT,
     description TEXT,
     lieu VARCHAR(255),
+    img_url VARCHAR(255), -- nuovo campo per immagine sessione
     id_cours INT NOT NULL,
     id_tranche INT NOT NULL,
-    id_utilisateur INT NOT NULL, -- Coach qui anime la session
+    id_utilisateur INT NOT NULL, -- Coach che anima la sessione
     FOREIGN KEY (id_cours) REFERENCES cours(id_cours),
     FOREIGN KEY (id_tranche) REFERENCES tranche_age(id_tranche),
     FOREIGN KEY (id_utilisateur) REFERENCES coach(id_utilisateur)
@@ -123,5 +125,5 @@ CREATE TABLE IF NOT EXISTS inscription (
     id_chien INT NOT NULL,
     FOREIGN KEY (id_session) REFERENCES session(id_session),
     FOREIGN KEY (id_chien) REFERENCES chien(id_chien),
-    UNIQUE (id_session, id_chien) -- Un chien ne peut être inscrit deux fois à la même session
+    UNIQUE (id_session, id_chien) -- Un cane non può iscriversi due volte alla stessa sessione
     );

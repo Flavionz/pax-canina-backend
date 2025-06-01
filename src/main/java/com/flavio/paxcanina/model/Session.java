@@ -37,6 +37,9 @@ public class Session {
     @Column(name = "capacite_max")
     private Integer capaciteMax;
 
+    @Column(name = "img_url")
+    private String imgUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "niveau")
     private Niveau niveau;

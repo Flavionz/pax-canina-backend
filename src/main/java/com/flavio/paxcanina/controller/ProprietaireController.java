@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/proprietaire")
-@CrossOrigin(origins = "http://localhost:4200") // opzionale, ma raccomandato
+@CrossOrigin(origins = "http://localhost:4200")
 public class ProprietaireController {
 
     private final ProprietaireService proprietaireService;
@@ -27,17 +27,15 @@ public class ProprietaireController {
         this.proprietaireService = proprietaireService;
     }
 
-    @GetMapping("/profil")
+    @GetMapping("/me")
     public ResponseEntity<ProfilProprietaireDto> getMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
         Utilisateur utilisateur = userDetails.getUtilisateur();
 
-        // Solo proprietari
         if (!(utilisateur instanceof Proprietaire proprietaire)) {
             return ResponseEntity.status(403).build();
         }
 
-        // Carica eagerly cani + iscrizioni (query custom nel service!)
         Proprietaire loaded = proprietaireService.findByIdWithChiensAndInscriptions(proprietaire.getIdUtilisateur());
         if (loaded == null) return ResponseEntity.notFound().build();
 
@@ -46,7 +44,6 @@ public class ProprietaireController {
         return ResponseEntity.ok(dto);
     }
 
-    // Metodo helper di mapping (puoi spostarlo in un service/mapper se vuoi)
     private ProfilProprietaireDto mapProprietaireToDto(Proprietaire p) {
         ProfilProprietaireDto dto = new ProfilProprietaireDto();
         dto.setId(p.getIdUtilisateur());

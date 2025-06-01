@@ -25,6 +25,10 @@ public class Cours {
     @Column(name = "statut")
     private String statut;
 
+    @Column(name = "img_url")
+    private String imgUrl;
+
+
     // Un corso può avere molte sessioni
     @OneToMany(mappedBy = "cours", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Session> sessions;
