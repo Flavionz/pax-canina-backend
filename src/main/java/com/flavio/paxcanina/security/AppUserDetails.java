@@ -1,6 +1,6 @@
 package com.flavio.paxcanina.security;
 
-import com.flavio.paxcanina.model.Utilisateur;
+import com.flavio.paxcanina.model.*;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,9 +20,14 @@ public class AppUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // Adatta il metodo per ottenere il ruolo dal tuo modello Utilisateur
-        return List.of(new SimpleGrantedAuthority("ROLE_" + utilisateur.getRole()));
-        // Sostituisci "getRole()" con il nome del metodo/campo che usi per il ruolo
+        return List.of(new SimpleGrantedAuthority("ROLE_" + getRole()));
+    }
+
+    public String getRole() {
+        if (utilisateur instanceof Admin) return "ADMIN";
+        if (utilisateur instanceof Coach) return "COACH";
+        if (utilisateur instanceof Proprietaire) return "PROPRIETAIRE";
+        return "UTILISATEUR";
     }
 
     @Override
@@ -37,23 +42,21 @@ public class AppUserDetails implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true; // O gestisci logica se hai scadenza account
+        return true;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true; // O gestisci logica se hai blocco account
+        return true;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true; // O gestisci logica se hai scadenza credenziali
+        return true;
     }
 
     @Override
     public boolean isEnabled() {
-        // Se hai un campo per la verifica email, puoi usarlo come nel codice del prof
-        // return utilisateur.getJetonVerificationEmail() == null;
-        return true; // O la logica che preferisci
+        return true;
     }
 }

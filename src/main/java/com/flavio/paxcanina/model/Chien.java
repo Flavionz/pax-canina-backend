@@ -36,18 +36,18 @@ public class Chien {
     @Column(name = "photo_url")
     private String photoUrl;
 
-    @Column(name = "numero_puce")
+    @Column(name = "numero_puce", unique = true)
     private String numeroPuce;
 
     @Column(name = "poids")
     private Double poids;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_utilisateur", nullable = false)
+    @JoinColumn(name = "id_proprietaire", nullable = false) // <-- cambia qui!
     private Proprietaire proprietaire;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_race", nullable = false)
+    @JoinColumn(name = "id_race") // nullable: true di default, corrisponde al tuo schema
     private Race race;
 
     @OneToMany(mappedBy = "chien", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -6,6 +6,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -30,36 +31,30 @@ public class Session {
     @Column(name = "description")
     private String description;
 
-    @Column(name = "duree")
-    private String duree;
+    @Column(name = "lieu")
+    private String lieu;
 
-    // Capienza massima della sessione
     @Column(name = "capacite_max")
     private Integer capaciteMax;
 
-    // Livello della sessione (Enum consigliato)
     @Enumerated(EnumType.STRING)
     @Column(name = "niveau")
     private Niveau niveau;
 
-    // Fascia d'età della sessione
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tranche")
+    @JoinColumn(name = "id_tranche", nullable = false)
     private TrancheAge trancheAge;
 
-    // Relazione con il corso
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_cours", nullable = false)
     private Cours cours;
 
-    // Relazione con il coach che dirige la sessione
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_coach", nullable = false)
+    @JoinColumn(name = "id_utilisateur", nullable = false)
     private Coach coach;
 
-    // (Opzionale) Relazione OneToMany con Inscription
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<Inscription> inscriptions;
+    private List<Inscription> inscriptions;
 
     public Session() {}
 }

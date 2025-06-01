@@ -18,14 +18,16 @@ public class Specialisation {
     private Integer idSpecialisation;
 
     @Column(name = "nom", nullable = false, unique = true)
-    private String nom; // Es: Agility, Obedience, Difesa, Socializzazione
+    private String nom;
 
     @Column(name = "description")
     private String description;
 
-    // (Opzionale) Relazione inversa con Coach
     @ManyToMany(mappedBy = "specialisations")
     private Set<Coach> coachs;
+
+    @ManyToMany(mappedBy = "specialisations")
+    private Set<Cours> cours;
 
     public Specialisation() {}
 }

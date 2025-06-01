@@ -3,7 +3,6 @@ package com.flavio.paxcanina.controller;
 import com.flavio.paxcanina.dto.DogDto;
 import com.flavio.paxcanina.dto.InscriptionDto;
 import com.flavio.paxcanina.dto.ProfilProprietaireDto;
-import com.flavio.paxcanina.model.Chien;
 import com.flavio.paxcanina.model.Inscription;
 import com.flavio.paxcanina.model.Proprietaire;
 import com.flavio.paxcanina.model.Utilisateur;
@@ -18,7 +17,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/proprietaires")
+@RequestMapping("/api/proprietaire")
+@CrossOrigin(origins = "http://localhost:4200") // opzionale, ma raccomandato
 public class ProprietaireController {
 
     private final ProprietaireService proprietaireService;
@@ -27,44 +27,43 @@ public class ProprietaireController {
         this.proprietaireService = proprietaireService;
     }
 
-    // ... altri endpoint ...
-
-    @GetMapping("/me")
+    @GetMapping("/profil")
     public ResponseEntity<ProfilProprietaireDto> getMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
         Utilisateur utilisateur = userDetails.getUtilisateur();
 
-        // Controllo robusto sul ruolo
-        String ruolo = utilisateur.getRole();
-        if (!(utilisateur instanceof Proprietaire) ||
-                !(ruolo.equals("PROPRIETAIRE") || ruolo.equals("ROLE_PROPRIETAIRE"))) {
+        // Solo proprietari
+        if (!(utilisateur instanceof Proprietaire proprietaire)) {
             return ResponseEntity.status(403).build();
         }
 
-        // Carica il proprietario con cani e iscrizioni (QUERY CUSTOM!)
-        Proprietaire proprietaire = proprietaireService.findByIdWithChiensAndInscriptions(utilisateur.getIdUtilisateur());
-        if (proprietaire == null) {
-            return ResponseEntity.notFound().build();
-        }
+        // Carica eagerly cani + iscrizioni (query custom nel service!)
+        Proprietaire loaded = proprietaireService.findByIdWithChiensAndInscriptions(proprietaire.getIdUtilisateur());
+        if (loaded == null) return ResponseEntity.notFound().build();
 
-        // Mapping da Proprietaire a ProfilProprietaireDto
+        ProfilProprietaireDto dto = mapProprietaireToDto(loaded);
+
+        return ResponseEntity.ok(dto);
+    }
+
+    // Metodo helper di mapping (puoi spostarlo in un service/mapper se vuoi)
+    private ProfilProprietaireDto mapProprietaireToDto(Proprietaire p) {
         ProfilProprietaireDto dto = new ProfilProprietaireDto();
-        dto.setId(proprietaire.getIdUtilisateur());
-        dto.setPrenom(proprietaire.getPrenom());
-        dto.setNom(proprietaire.getNom());
-        dto.setEmail(proprietaire.getEmail());
-        dto.setTelephone(proprietaire.getTelephone());
-        dto.setAdresse(proprietaire.getAdresse());
-        dto.setVille(proprietaire.getVille());
-        dto.setCodePostal(proprietaire.getCodePostal());
-        dto.setBio(proprietaire.getBio());
-        dto.setAvatarUrl(proprietaire.getAvatarUrl());
-        dto.setDateInscription(proprietaire.getDateInscription());
+        dto.setId(p.getIdUtilisateur());
+        dto.setPrenom(p.getPrenom());
+        dto.setNom(p.getNom());
+        dto.setEmail(p.getEmail());
+        dto.setTelephone(p.getTelephone());
+        dto.setAdresse(p.getAdresse());
+        dto.setVille(p.getVille());
+        dto.setCodePostal(p.getCodePostal());
+        dto.setBio(p.getBio());
+        dto.setAvatarUrl(p.getAvatarUrl());
+        dto.setDateInscription(p.getDateInscription());
 
-        // Lista cani
         List<DogDto> chiensDto = new ArrayList<>();
-        if (proprietaire.getChiens() != null) {
-            chiensDto = proprietaire.getChiens().stream().map(chien -> {
+        if (p.getChiens() != null) {
+            chiensDto = p.getChiens().stream().map(chien -> {
                 DogDto d = new DogDto();
                 d.setIdChien(chien.getIdChien());
                 d.setNom(chien.getNom());
@@ -79,9 +78,8 @@ public class ProprietaireController {
         }
         dto.setChiens(chiensDto);
 
-        // Lista iscrizioni: aggrega tutte le iscrizioni dei cani del proprietario
-        List<Inscription> allInscriptions = proprietaire.getChiens() != null
-                ? proprietaire.getChiens().stream()
+        List<Inscription> allInscriptions = (p.getChiens() != null)
+                ? p.getChiens().stream()
                 .filter(chien -> chien.getInscriptions() != null)
                 .flatMap(chien -> chien.getInscriptions().stream())
                 .distinct()
@@ -91,17 +89,15 @@ public class ProprietaireController {
         List<InscriptionDto> inscriptionsDto = allInscriptions.stream().map(insc -> {
             InscriptionDto i = new InscriptionDto();
             i.setId(insc.getIdInscription());
-            i.setActivity(
-                    (insc.getSession() != null && insc.getSession().getCours() != null)
-                            ? insc.getSession().getCours().getNom()
-                            : null
-            );
-            i.setDate(insc.getDateInscription());
+            i.setNomSession(insc.getSession() != null ? insc.getSession().getDescription() : null);
+            i.setNomCours(insc.getSession() != null && insc.getSession().getCours() != null ? insc.getSession().getCours().getNom() : null);
+            i.setNomChien(insc.getChien() != null ? insc.getChien().getNom() : null);
+            i.setDateInscription(insc.getDateInscription());
             i.setStatus(insc.getStatus());
             return i;
         }).collect(Collectors.toList());
         dto.setInscriptions(inscriptionsDto);
 
-        return ResponseEntity.ok(dto);
+        return dto;
     }
 }

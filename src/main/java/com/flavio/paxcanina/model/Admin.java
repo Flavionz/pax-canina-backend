@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @Entity
-@DiscriminatorValue("ADMIN")
+@Table(name = "admin")
 public class Admin extends Utilisateur {
     public Admin() {}
 }

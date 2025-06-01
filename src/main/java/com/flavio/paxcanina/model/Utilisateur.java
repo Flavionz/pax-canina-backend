@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "utilisateur")
 @Inheritance(strategy = InheritanceType.JOINED)
-@DiscriminatorColumn(name = "type_utilisateur", discriminatorType = DiscriminatorType.STRING)
 public abstract class Utilisateur {
 
     @Id
@@ -45,6 +44,12 @@ public abstract class Utilisateur {
     @Column(name = "date_inscription", nullable = false)
     protected LocalDate dateInscription;
 
+    @Column(name = "avatar_url")
+    protected String avatarUrl;
+
+    @Column(name = "bio")
+    protected String bio;
+
     @Column(name = "last_login")
     protected LocalDateTime lastLogin;
 
@@ -54,7 +59,6 @@ public abstract class Utilisateur {
         return this.getClass().getSimpleName().toUpperCase();
     }
 
-    // Getter e setter per la password (hash)
     @Transient
     public String getPassword() {
         return this.passwordHash;

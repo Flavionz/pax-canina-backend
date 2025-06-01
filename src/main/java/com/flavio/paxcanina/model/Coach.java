@@ -8,7 +8,7 @@ import java.util.Set;
 @Getter
 @Setter
 @Entity
-@DiscriminatorValue("COACH")
+@Table(name = "coach")
 public class Coach extends Utilisateur {
 
     // Specializzazioni del coach (Agility, Obedience, ecc.)
@@ -20,13 +20,9 @@ public class Coach extends Utilisateur {
     )
     private Set<Specialisation> specialisations;
 
-    // (Opzionale) Tutte le sessioni che il coach dirige
+    // Tutte le sessioni che il coach dirige
     @OneToMany(mappedBy = "coach")
     private Set<Session> sessions;
-
-    // (Opzionale) Altri attributi specifici del coach
-    // private Integer anniEsperienza;
-    // private String bio;
 
     public Coach() {}
 }

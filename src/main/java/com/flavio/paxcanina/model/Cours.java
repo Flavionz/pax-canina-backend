@@ -29,10 +29,17 @@ public class Cours {
     @OneToMany(mappedBy = "cours", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Session> sessions;
 
-    // (Opzionale) Relazione con Admin creatore del corso
-    // @ManyToOne
-    // @JoinColumn(name = "id_admin")
-    // private Admin adminCreateur;
+    // ManyToMany con Specialisation (tabella di join cours_specialisation)
+    @ManyToMany
+    @JoinTable(
+            name = "cours_specialisation",
+            joinColumns = @JoinColumn(name = "id_cours"),
+            inverseJoinColumns = @JoinColumn(name = "id_specialisation")
+    )
+    private Set<Specialisation> specialisations;
+
+    // (Opzionale) Relazione con Admin creatore del corso:
+    // Solo se aggiungi id_admin nello schema.sql!
 
     public Cours() {}
 }

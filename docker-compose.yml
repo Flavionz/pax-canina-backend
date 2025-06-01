@@ -13,5 +13,16 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: paxcanina-mysql
+      MYSQL_ROOT_PASSWORD: rootpw
+    depends_on:
+      - mysql
+
 volumes:
   mysql_data:
