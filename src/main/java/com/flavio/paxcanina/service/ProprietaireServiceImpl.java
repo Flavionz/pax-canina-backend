@@ -45,4 +45,26 @@ public class ProprietaireServiceImpl implements ProprietaireService {
     public Proprietaire findByIdWithChiensAndInscriptions(Integer id) {
         return proprietaireDao.findByIdWithChiensAndInscriptions(id).orElse(null);
     }
+
+    @Override
+    public Proprietaire update(Integer id, Proprietaire proprietaire) {
+        Proprietaire existing = proprietaireDao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Propriétaire non trouvé"));
+        existing.setNom(proprietaire.getNom());
+        existing.setPrenom(proprietaire.getPrenom());
+        existing.setEmail(proprietaire.getEmail());
+        existing.setTelephone(proprietaire.getTelephone());
+        existing.setAdresse(proprietaire.getAdresse());
+        existing.setVille(proprietaire.getVille());
+        existing.setCodePostal(proprietaire.getCodePostal());
+        existing.setBio(proprietaire.getBio());
+        existing.setAvatarUrl(proprietaire.getAvatarUrl());
+        // NON aggiornare la password qui!
+        return proprietaireDao.save(existing);
+    }
+
+    @Override
+    public void delete(Integer id) {
+        proprietaireDao.deleteById(id);
+    }
 }

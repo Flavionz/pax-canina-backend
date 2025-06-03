@@ -27,6 +27,7 @@ public class ProprietaireController {
         this.proprietaireService = proprietaireService;
     }
 
+    // GET profilo personale autenticato
     @GetMapping("/me")
     public ResponseEntity<ProfilProprietaireDto> getMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
@@ -42,6 +43,56 @@ public class ProprietaireController {
         ProfilProprietaireDto dto = mapProprietaireToDto(loaded);
 
         return ResponseEntity.ok(dto);
+    }
+
+    // UPDATE profilo personale autenticato
+    @PutMapping("/me")
+    public ResponseEntity<ProfilProprietaireDto> updateMyProfile(
+            @RequestBody ProfilProprietaireDto dto,
+            Authentication authentication) {
+        AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
+        Utilisateur utilisateur = userDetails.getUtilisateur();
+
+        if (!(utilisateur instanceof Proprietaire proprietaire)) {
+            return ResponseEntity.status(403).build();
+        }
+
+        try {
+            Proprietaire updated = proprietaireService.update(proprietaire.getIdUtilisateur(), mapDtoToProprietaire(dto));
+            ProfilProprietaireDto updatedDto = mapProprietaireToDto(updated);
+            return ResponseEntity.ok(updatedDto);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // DELETE profilo personale autenticato
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMyProfile(Authentication authentication) {
+        AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
+        Utilisateur utilisateur = userDetails.getUtilisateur();
+
+        if (!(utilisateur instanceof Proprietaire proprietaire)) {
+            return ResponseEntity.status(403).build();
+        }
+        proprietaireService.delete(proprietaire.getIdUtilisateur());
+        return ResponseEntity.noContent().build();
+    }
+
+    // --- MAPPERS ---
+    private Proprietaire mapDtoToProprietaire(ProfilProprietaireDto dto) {
+        Proprietaire p = new Proprietaire();
+        p.setIdUtilisateur(dto.getId());
+        p.setNom(dto.getNom());
+        p.setPrenom(dto.getPrenom());
+        p.setEmail(dto.getEmail());
+        p.setTelephone(dto.getTelephone());
+        p.setAdresse(dto.getAdresse());
+        p.setVille(dto.getVille());
+        p.setCodePostal(dto.getCodePostal());
+        p.setBio(dto.getBio());
+        p.setAvatarUrl(dto.getAvatarUrl());
+        return p;
     }
 
     private ProfilProprietaireDto mapProprietaireToDto(Proprietaire p) {

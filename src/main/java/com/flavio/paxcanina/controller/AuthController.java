@@ -43,7 +43,6 @@ public class AuthController {
         this.jwtService = jwtService;
     }
 
-    // REGISTRA PROPRIETAIRE
     @PostMapping("/register/proprietaire")
     public ResponseEntity<?> registerProprietaire(@RequestBody @Valid ProprietaireRegistrationDTO dto) {
         Proprietaire p = new Proprietaire();
@@ -79,7 +78,6 @@ public class AuthController {
         }
     }
 
-    // DTO per la risposta JWT
     @Getter
     public static class JwtResponse {
         public String token;
