@@ -1,4 +1,3 @@
--- Table principale UTILISATEUR
 CREATE TABLE IF NOT EXISTS utilisateur (
                                            id_utilisateur INT AUTO_INCREMENT PRIMARY KEY,
                                            nom VARCHAR(50) NOT NULL,
@@ -12,19 +11,16 @@ CREATE TABLE IF NOT EXISTS utilisateur (
                                            last_login DATETIME
 );
 
--- ADMIN
 CREATE TABLE IF NOT EXISTS admin (
                                      id_utilisateur INT PRIMARY KEY,
                                      FOREIGN KEY (id_utilisateur) REFERENCES utilisateur(id_utilisateur)
 );
 
--- COACH
 CREATE TABLE IF NOT EXISTS coach (
                                      id_utilisateur INT PRIMARY KEY,
                                      FOREIGN KEY (id_utilisateur) REFERENCES utilisateur(id_utilisateur)
 );
 
--- PROPRIETAIRE
 CREATE TABLE IF NOT EXISTS proprietaire (
                                             id_utilisateur INT PRIMARY KEY,
                                             adresse VARCHAR(255),
@@ -33,13 +29,11 @@ CREATE TABLE IF NOT EXISTS proprietaire (
                                             FOREIGN KEY (id_utilisateur) REFERENCES utilisateur(id_utilisateur)
 );
 
--- SPECIALISATION
 CREATE TABLE IF NOT EXISTS specialisation (
                                               id_specialisation INT AUTO_INCREMENT PRIMARY KEY,
                                               nom VARCHAR(100) NOT NULL
 );
 
--- Association coach <-> specialisation (a_pour_specialisation)
 CREATE TABLE IF NOT EXISTS coach_specialisation (
                                                     id_utilisateur INT,
                                                     id_specialisation INT,
@@ -48,16 +42,14 @@ CREATE TABLE IF NOT EXISTS coach_specialisation (
                                                     FOREIGN KEY (id_specialisation) REFERENCES specialisation(id_specialisation)
 );
 
--- COURS
 CREATE TABLE IF NOT EXISTS cours (
                                      id_cours INT AUTO_INCREMENT PRIMARY KEY,
                                      nom VARCHAR(100) NOT NULL,
                                      description TEXT,
                                      statut VARCHAR(50),
-                                     img_url VARCHAR(255) -- nuovo campo per immagine presentazione
+                                     img_url VARCHAR(255)
 );
 
--- Association cours <-> specialisation (requiert_specialisation)
 CREATE TABLE IF NOT EXISTS cours_specialisation (
                                                     id_cours INT,
                                                     id_specialisation INT,
@@ -66,7 +58,6 @@ CREATE TABLE IF NOT EXISTS cours_specialisation (
                                                     FOREIGN KEY (id_specialisation) REFERENCES specialisation(id_specialisation)
 );
 
--- TRANCHE_AGE
 CREATE TABLE IF NOT EXISTS tranche_age (
                                            id_tranche INT AUTO_INCREMENT PRIMARY KEY,
                                            nom VARCHAR(100) NOT NULL,
@@ -74,7 +65,6 @@ CREATE TABLE IF NOT EXISTS tranche_age (
                                            age_max INT
 );
 
--- SESSION
 CREATE TABLE IF NOT EXISTS session (
                                        id_session INT AUTO_INCREMENT PRIMARY KEY,
                                        date DATE NOT NULL,
@@ -84,22 +74,20 @@ CREATE TABLE IF NOT EXISTS session (
                                        capacite_max INT,
                                        description TEXT,
                                        lieu VARCHAR(255),
-                                       img_url VARCHAR(255), -- nuovo campo per immagine sessione
+                                       img_url VARCHAR(255),
                                        id_cours INT NOT NULL,
                                        id_tranche INT NOT NULL,
-                                       id_utilisateur INT NOT NULL, -- Coach che anima la sessione
+                                       id_utilisateur INT NOT NULL,
                                        FOREIGN KEY (id_cours) REFERENCES cours(id_cours),
                                        FOREIGN KEY (id_tranche) REFERENCES tranche_age(id_tranche),
                                        FOREIGN KEY (id_utilisateur) REFERENCES coach(id_utilisateur)
 );
 
--- RACE
 CREATE TABLE IF NOT EXISTS race (
                                     id_race INT AUTO_INCREMENT PRIMARY KEY,
                                     nom VARCHAR(100) NOT NULL
 );
 
--- CHIEN
 CREATE TABLE IF NOT EXISTS chien (
                                      id_chien INT AUTO_INCREMENT PRIMARY KEY,
                                      nom VARCHAR(50) NOT NULL,
@@ -114,7 +102,6 @@ CREATE TABLE IF NOT EXISTS chien (
                                      FOREIGN KEY (id_race) REFERENCES race(id_race)
 );
 
--- INSCRIPTION
 CREATE TABLE IF NOT EXISTS inscription (
                                            id_inscription INT AUTO_INCREMENT PRIMARY KEY,
                                            date_inscription DATE NOT NULL,
@@ -125,5 +112,5 @@ CREATE TABLE IF NOT EXISTS inscription (
                                            id_chien INT NOT NULL,
                                            FOREIGN KEY (id_session) REFERENCES session(id_session),
                                            FOREIGN KEY (id_chien) REFERENCES chien(id_chien),
-                                           UNIQUE (id_session, id_chien) -- Un cane non può iscriversi due volte alla stessa sessione
+                                           UNIQUE (id_session, id_chien)
 );
