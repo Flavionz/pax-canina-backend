@@ -52,7 +52,8 @@ INSERT INTO coach_specialisation (id_utilisateur, id_specialisation) VALUES (2, 
 
 INSERT INTO cours (id_cours, nom, description, statut, img_url) VALUES
                                                                     (1, 'Obbedienza Base', 'Corso base di obbedienza', 'ATTIVO', 'https://example.com/images/obedienza.jpg'),
-                                                                    (2, 'Agility Dog', 'Percorso Agility', 'ATTIVO', 'https://example.com/images/agility.jpg');
+                                                                    (2, 'Agility Dog', 'Percorso Agility', 'ATTIVO', 'https://example.com/images/agility.jpg'),
+                                                                    (3, 'Scuola per Cuccioli', 'battezzo cuccioli', 'ATTIVO', 'no');
 
 INSERT INTO cours_specialisation (id_cours, id_specialisation) VALUES (1, 1), (2, 2);
 
