@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import java.util.Map;
 
 import java.io.IOException;
 import java.util.List;
@@ -47,7 +48,8 @@ public class UploadController {
                     ? fileService.buildPublicUrl(fileName)
                     : "Upload réussi (fichier privé non accessible publiquement)";
 
-            return ResponseEntity.ok().body(fileUrl);
+            return ResponseEntity.ok().body(Map.of("url", fileUrl));
+
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body("Erreur lors de l’upload : " + e.getMessage());
         }
