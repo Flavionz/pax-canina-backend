@@ -1,7 +1,7 @@
 package com.flavio.paxcanina.controller;
 
 import com.flavio.paxcanina.model.Admin;
-import com.flavio.paxcanina.security.AdminService;
+import com.flavio.paxcanina.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

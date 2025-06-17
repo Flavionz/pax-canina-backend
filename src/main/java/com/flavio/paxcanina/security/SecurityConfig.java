@@ -61,12 +61,19 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
+                        // 1) endpoint pubblici:
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/api/cours/**").permitAll()
+
+                        .requestMatchers(HttpMethod.POST,   "/api/cours/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/cours/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cours/**").hasRole("ADMIN")
+
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
-
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 

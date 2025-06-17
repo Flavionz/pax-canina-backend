@@ -1,4 +1,4 @@
-package com.flavio.paxcanina.security;
+package com.flavio.paxcanina.service;
 
 import com.flavio.paxcanina.dao.AdminDao;
 import com.flavio.paxcanina.dao.UtilisateurDao;
