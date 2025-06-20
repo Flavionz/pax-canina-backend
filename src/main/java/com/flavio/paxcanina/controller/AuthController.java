@@ -70,7 +70,7 @@ public class AuthController {
                     )
             );
             AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-            String role = userDetails.getRole(); // Fai in modo che sia estratto davvero dalle tabelle!
+            String role = userDetails.getRole();
             String token = jwtService.generateToken(userDetails, role);
             return ResponseEntity.ok().body(new JwtResponse(token, role));
         } catch (AuthenticationException e) {

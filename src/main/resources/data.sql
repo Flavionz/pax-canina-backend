@@ -39,7 +39,7 @@ INSERT INTO utilisateur (
     id_utilisateur, nom, prenom, email, password_hash, telephone, date_inscription, avatar_url, bio, last_login
 ) VALUES (
              3, 'Admin', 'Master', 'admin@admin.com',
-             '$2a$12$QKQwiAbwq2OwDmh7AyLOi.JljEkUL8D9OX6OfDttthDG1OQp5nxyi', -- password: admin
+             '$2a$12$xqlCUYAxHlTKLAB0YMlo4.SY9D59GxE/250F0jnZL1egn9bT0OHyG', -- password: admin
              '3332223333', '2024-01-01', NULL, 'Super Admin', '2024-05-21 10:30:00'
          );
 

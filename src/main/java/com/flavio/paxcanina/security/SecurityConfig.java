@@ -28,12 +28,13 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsService userDetailsService;
+    private final UserDetailsService       userDetailsService;
 
     @Autowired
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          UserDetailsService userDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.userDetailsService = userDetailsService;
+        this.userDetailsService      = userDetailsService;
     }
 
     @Bean
@@ -50,45 +51,59 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration authConfig) throws Exception {
+    public AuthenticationManager authenticationManager(
+            org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration authConfig
+    ) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                // disabilito CSRF e sessione stateless
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+
+                // regole di accesso
                 .authorizeHttpRequests(authz -> authz
-                        // 1) endpoint pubblici:
+
+                        // 1) end‐point di autenticazione → aperti
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/cours/**").permitAll()
+
+                        // 2) corsi in lettura → aperti a tutti
+                        .requestMatchers(HttpMethod.GET,  "/api/cours/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/api/cours/**").permitAll()
 
+                        // 3) corsi in scrittura → solo ADMIN
                         .requestMatchers(HttpMethod.POST,   "/api/cours/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/cours/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/cours/**").hasRole("ADMIN")
 
+                        // 4) tutte le API /api/admin/** (incluso /api/admin/me) → solo ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
+                        // 5) tutto il resto → utente autenticato
                         .anyRequest().authenticated()
                 )
+
+                // aggiungo il provider e il filtro JWT
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+        ;
 
         return http.build();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(List.of("*"));
-        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "DELETE", "PUT", "PATCH"));
-        corsConfiguration.setAllowedHeaders(List.of("*"));
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("*"));
+        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","PATCH","OPTIONS"));
+        config.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfiguration);
+        source.registerCorsConfiguration("/**", config);
         return source;
     }
 }

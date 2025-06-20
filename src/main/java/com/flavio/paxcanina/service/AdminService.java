@@ -23,12 +23,22 @@ public class AdminService {
         this.utilisateurDao = utilisateurDao;
     }
 
+    /**
+     * Restituisce tutti gli Admin (cioè tutti i record nella tabella admin).
+     */
     public List<Admin> findAllAdmins() {
         return adminDao.findAll();
     }
 
+    /**
+     * Promuove un utente esistente a Admin copiando i suoi dati.
+     * Se già presente, ritorna semplicemente l’Admin esistente.
+     *
+     * @throws ResponseStatusException 404 se l’utente non esiste
+     */
     @Transactional
     public Admin promoteToAdmin(int utilisateurId) {
+        // 1) carica l’utente
         Utilisateur u = utilisateurDao.findById(utilisateurId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
@@ -50,9 +60,18 @@ public class AdminService {
             return adminDao.save(admin);
         }
 
-        return adminDao.getById(utilisateurId);
+        return adminDao.findById(utilisateurId)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.INTERNAL_SERVER_ERROR,
+                        "Admin record inconsistente per l’utente " + utilisateurId
+                ));
     }
 
+    /**
+     * Revoca il ruolo Admin eliminando il record corrispondente.
+     *
+     * @throws ResponseStatusException 404 se non esiste un Admin con quell’id
+     */
     @Transactional
     public void removeAdmin(int id) {
         Admin adm = adminDao.findById(id)
