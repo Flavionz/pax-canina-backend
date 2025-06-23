@@ -28,13 +28,13 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final UserDetailsService       userDetailsService;
+    private final UserDetailsService userDetailsService;
 
     @Autowired
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
                           UserDetailsService userDetailsService) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
-        this.userDetailsService      = userDetailsService;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -68,22 +68,32 @@ public class SecurityConfig {
                 // regole di accesso
                 .authorizeHttpRequests(authz -> authz
 
-                        // 1) end‐point di autenticazione → aperti
+                        // 1) End-point di autenticazione → aperti
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 2) corsi in lettura → aperti a tutti
+                        // 2) Corsi in lettura → aperti a tutti
                         .requestMatchers(HttpMethod.GET,  "/api/cours/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/api/cours/**").permitAll()
 
-                        // 3) corsi in scrittura → solo ADMIN
+                        // 3) Corsi in scrittura → solo ADMIN
                         .requestMatchers(HttpMethod.POST,   "/api/cours/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,    "/api/cours/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/cours/**").hasRole("ADMIN")
 
-                        // 4) tutte le API /api/admin/** (incluso /api/admin/me) → solo ADMIN
+                        // 4) CRUD utenti → solo ADMIN (tutti i metodi principali)
+                        .requestMatchers(HttpMethod.GET,    "/api/utilisateur/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,   "/api/utilisateur/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/utilisateur/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/utilisateur/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET,    "/api/utilisateur").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST,   "/api/utilisateur").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/utilisateur").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/utilisateur").hasRole("ADMIN")
+
+                        // 5) tutte le API /api/admin/** (incluso /api/admin/me) → solo ADMIN
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 5) tutto il resto → utente autenticato
+                        // 6) tutto il resto → utente autenticato
                         .anyRequest().authenticated()
                 )
 

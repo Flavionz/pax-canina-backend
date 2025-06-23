@@ -27,7 +27,6 @@ public class ProprietaireController {
         this.proprietaireService = proprietaireService;
     }
 
-    // GET profilo personale autenticato
     @GetMapping("/me")
     public ResponseEntity<ProfilProprietaireDto> getMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
@@ -45,7 +44,6 @@ public class ProprietaireController {
         return ResponseEntity.ok(dto);
     }
 
-    // UPDATE profilo personale autenticato
     @PutMapping("/me")
     public ResponseEntity<ProfilProprietaireDto> updateMyProfile(
             @RequestBody ProfilProprietaireDto dto,
@@ -66,7 +64,6 @@ public class ProprietaireController {
         }
     }
 
-    // DELETE profilo personale autenticato
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
@@ -79,7 +76,6 @@ public class ProprietaireController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- MAPPERS ---
     private Proprietaire mapDtoToProprietaire(ProfilProprietaireDto dto) {
         Proprietaire p = new Proprietaire();
         p.setIdUtilisateur(dto.getId());

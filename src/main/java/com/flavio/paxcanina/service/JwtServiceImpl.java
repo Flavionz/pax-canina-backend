@@ -33,7 +33,7 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public String generateToken(AppUserDetails userDetails, String role) {
-        long expirationMillis = 1000 * 60 * 60 * 24; // 24 ore, puoi modificarlo a piacere
+        long expirationMillis = 1000 * 60 * 60 * 24;
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMillis);
 
