@@ -1,5 +1,6 @@
 package com.flavio.paxcanina.controller;
 
+import com.flavio.paxcanina.dto.AdminProfileDto;
 import com.flavio.paxcanina.model.Admin;
 import com.flavio.paxcanina.security.AppUserDetails;
 import com.flavio.paxcanina.service.AdminService;
@@ -24,38 +25,37 @@ public class AdminController {
         this.adminService = adminService;
     }
 
-    /**
-     * GET /api/admin
-     * Restituisce la lista di tutti gli Admin.
-     */
     @GetMapping
     public List<Admin> list() {
         return adminService.findAllAdmins();
     }
 
-    /**
-     * GET /api/admin/me
-     * Restituisce il profilo dell’Admin attualmente autenticato.
-     */
     @GetMapping("/me")
-    public Admin me(Authentication authentication) {
+    public AdminProfileDto me(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        return userDetails.getAdmin();
+        Admin admin = userDetails.getAdmin();
+        return adminService.toProfileDto(admin);
     }
 
-    /**
-     * POST /api/admin?userId=123
-     * Promuove l’utente con ID=123 a Admin.
-     */
+    @PutMapping("/me")
+    public ResponseEntity<AdminProfileDto> updateMyProfile(
+            @RequestBody AdminProfileDto dto,
+            Authentication authentication
+    ) {
+        AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
+        Admin admin = userDetails.getAdmin();
+
+        Admin updated = adminService.updateProfile(admin, dto);
+        AdminProfileDto response = adminService.toProfileDto(updated);
+        response.setEmail(admin.getEmail());
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     public Admin create(@RequestParam("userId") int userId) {
         return adminService.promoteToAdmin(userId);
     }
 
-    /**
-     * DELETE /api/admin/{id}
-     * Revoca il ruolo Admin all’utente con ID={id}.
-     */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable("id") int id) {
         adminService.removeAdmin(id);

@@ -2,6 +2,7 @@ package com.flavio.paxcanina.service;
 
 import com.flavio.paxcanina.dao.AdminDao;
 import com.flavio.paxcanina.dao.UtilisateurDao;
+import com.flavio.paxcanina.dto.AdminProfileDto;
 import com.flavio.paxcanina.model.Admin;
 import com.flavio.paxcanina.model.Utilisateur;
 import org.springframework.http.HttpStatus;
@@ -23,19 +24,12 @@ public class AdminService {
         this.utilisateurDao = utilisateurDao;
     }
 
-    /**
-     * Restituisce tutti gli Admin (cioè tutti i record nella tabella admin).
-     */
+
     public List<Admin> findAllAdmins() {
         return adminDao.findAll();
     }
 
-    /**
-     * Promuove un utente esistente a Admin copiando i suoi dati.
-     * Se già presente, ritorna semplicemente l’Admin esistente.
-     *
-     * @throws ResponseStatusException 404 se l’utente non esiste
-     */
+
     @Transactional
     public Admin promoteToAdmin(int utilisateurId) {
         // 1) carica l’utente
@@ -67,11 +61,7 @@ public class AdminService {
                 ));
     }
 
-    /**
-     * Revoca il ruolo Admin eliminando il record corrispondente.
-     *
-     * @throws ResponseStatusException 404 se non esiste un Admin con quell’id
-     */
+
     @Transactional
     public void removeAdmin(int id) {
         Admin adm = adminDao.findById(id)
@@ -80,5 +70,32 @@ public class AdminService {
                         "Admin non trouvé avec l’id " + id
                 ));
         adminDao.delete(adm);
+    }
+
+
+    public Admin save(Admin admin) {
+        return adminDao.save(admin);
+    }
+
+    public AdminProfileDto toProfileDto(Admin admin) {
+        AdminProfileDto dto = new AdminProfileDto();
+        dto.setNom(admin.getNom());
+        dto.setPrenom(admin.getPrenom());
+        dto.setAvatarUrl(admin.getAvatarUrl());
+        dto.setBio(admin.getBio());
+        dto.setTelephone(admin.getTelephone());
+        dto.setEmail(admin.getEmail());
+        return dto;
+    }
+
+
+    @Transactional
+    public Admin updateProfile(Admin admin, AdminProfileDto dto) {
+        admin.setNom(dto.getNom());
+        admin.setPrenom(dto.getPrenom());
+        admin.setAvatarUrl(dto.getAvatarUrl());
+        admin.setBio(dto.getBio());
+        admin.setTelephone(dto.getTelephone());
+        return adminDao.save(admin);
     }
 }
