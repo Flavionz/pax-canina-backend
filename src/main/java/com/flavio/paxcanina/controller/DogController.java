@@ -1,69 +1,80 @@
 package com.flavio.paxcanina.controller;
 
 import com.flavio.paxcanina.dto.DogDto;
-import com.flavio.paxcanina.model.Utilisateur;
+import com.flavio.paxcanina.model.User;
 import com.flavio.paxcanina.security.AppUserDetails;
-import com.flavio.paxcanina.service.ChienService;
+import com.flavio.paxcanina.service.DogService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * REST controller for managing user's dogs (CRUD for the authenticated owner).
+ */
 @RestController
-@RequestMapping("/api/chien")
+@RequestMapping("/api/dogs")
 @CrossOrigin(origins = "http://localhost:4200")
-public class ChienController {
+public class DogController {
 
-    private final ChienService chienService;
+    private final DogService dogService;
 
-    public ChienController(ChienService chienService) {
-        this.chienService = chienService;
+    public DogController(DogService dogService) {
+        this.dogService = dogService;
     }
 
-    // GET tutti i cani dell’utente loggato
+    /**
+     * GET all dogs for the authenticated owner.
+     */
     @GetMapping("/me")
     public ResponseEntity<List<DogDto>> getMyDogs(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        Utilisateur utilisateur = userDetails.getUtilisateur();
-        Integer proprietaireId = utilisateur.getIdUtilisateur();
-        List<DogDto> dtos = chienService.findByProprietaireId(proprietaireId);
+        User user = userDetails.getUser();
+        Integer ownerId = user.getIdUser();
+        List<DogDto> dtos = dogService.findByOwnerId(ownerId);
         return ResponseEntity.ok(dtos);
     }
 
-    // POST nuovo cane
+    /**
+     * POST a new dog for the authenticated owner.
+     */
     @PostMapping("/me")
     public ResponseEntity<DogDto> createDog(@RequestBody DogDto dto, Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        Utilisateur utilisateur = userDetails.getUtilisateur();
-        Integer proprietaireId = utilisateur.getIdUtilisateur();
-        DogDto saved = chienService.createDogForProprietaire(dto, proprietaireId);
+        User user = userDetails.getUser();
+        Integer ownerId = user.getIdUser();
+        DogDto saved = dogService.createDogForOwner(dto, ownerId);
         return ResponseEntity.status(201).body(saved);
     }
 
-    // PUT modifica cane solo se di proprietà
+    /**
+     * PUT update a dog if and only if it belongs to the authenticated owner.
+     */
     @PutMapping("/me/{dogId}")
     public ResponseEntity<DogDto> updateDog(@PathVariable Integer dogId, @RequestBody DogDto dto, Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        Utilisateur utilisateur = userDetails.getUtilisateur();
-        Integer proprietaireId = utilisateur.getIdUtilisateur();
-        if (!chienService.isDogOwnedBy(dogId, proprietaireId)) {
+        User user = userDetails.getUser();
+        Integer ownerId = user.getIdUser();
+        if (!dogService.isDogOwnedBy(dogId, ownerId)) {
             return ResponseEntity.status(403).build();
         }
-        DogDto updated = chienService.updateDog(dogId, dto);
+        DogDto updated = dogService.updateDog(dogId, dto);
         return ResponseEntity.ok(updated);
     }
 
-    // DELETE cane solo se di proprietà
+    /**
+     * DELETE a dog if and only if it belongs to the authenticated owner.
+     */
     @DeleteMapping("/me/{dogId}")
     public ResponseEntity<Void> deleteDog(@PathVariable Integer dogId, Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        Utilisateur utilisateur = userDetails.getUtilisateur();
-        Integer proprietaireId = utilisateur.getIdUtilisateur();
-        if (!chienService.isDogOwnedBy(dogId, proprietaireId)) {
+        User user = userDetails.getUser();
+        Integer ownerId = user.getIdUser();
+        if (!dogService.isDogOwnedBy(dogId, ownerId)) {
             return ResponseEntity.status(403).build();
         }
-        chienService.deleteDog(dogId);
+        dogService.deleteDog(dogId);
         return ResponseEntity.noContent().build();
     }
 }

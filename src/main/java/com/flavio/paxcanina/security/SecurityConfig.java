@@ -60,47 +60,47 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // disabilito CSRF e sessione stateless
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
-                // regole di accesso
                 .authorizeHttpRequests(authz -> authz
 
-                        // 1) End-point di autenticazione → aperti
+                        // 1) Auth endpoints (login, register): public
                         .requestMatchers("/api/auth/**").permitAll()
 
-                        // 2) Corsi in lettura → aperti a tutti
-                        .requestMatchers(HttpMethod.GET,  "/api/cours/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/cours/**").permitAll()
+                        // 2) Courses: GET open to all, rest only for ADMIN
+                        .requestMatchers(HttpMethod.GET,  "/api/course/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/course/**").permitAll()
+                        .requestMatchers(HttpMethod.POST,   "/api/course/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,    "/api/course/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/course/**").hasRole("ADMIN")
 
-                        // 3) Corsi in scrittura → solo ADMIN
-                        .requestMatchers(HttpMethod.POST,   "/api/cours/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/cours/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/cours/**").hasRole("ADMIN")
+                        // 3) Users CRUD: only ADMIN
+                        .requestMatchers("/api/user/**").hasRole("ADMIN")
 
-                        // 4) CRUD utenti → solo ADMIN (tutti i metodi principali)
-                        .requestMatchers(HttpMethod.GET,    "/api/utilisateur/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST,   "/api/utilisateur/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/utilisateur/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/utilisateur/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET,    "/api/utilisateur").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST,   "/api/utilisateur").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/utilisateur").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/utilisateur").hasRole("ADMIN")
+                        // 4) Specializations: only ADMIN
+                        .requestMatchers("/api/specialization/**").hasRole("ADMIN")
 
-                        // 5) tutte le API /api/admin/** (incluso /api/admin/me) → solo ADMIN
+                        // 5) Sessions: only ADMIN
+                        .requestMatchers("/api/session/**").hasRole("ADMIN")
+
+                        // 6) Dogs: only ADMIN (for CRUD). Public/owner endpoints will be in /api/owner/**
+                        .requestMatchers("/api/dog/**").hasRole("ADMIN")
+
+                        // 7) Admin endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 6) tutto il resto → utente autenticato
+                        // 8) Owner endpoints: authenticated (can be further limited by roles in controller)
+                        .requestMatchers("/api/owner/**").authenticated()
+
+                        // 9) Coach endpoints (se previsti)
+                        .requestMatchers("/api/coach/**").authenticated()
+
+                        // 10) Any other endpoint: authentication required
                         .anyRequest().authenticated()
                 )
-
-                // aggiungo il provider e il filtro JWT
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-        ;
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

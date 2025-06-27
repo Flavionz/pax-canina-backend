@@ -6,11 +6,11 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class InscriptionDto {
+public class RegistrationDto {
     private Integer id;
-    private String nomSession;
-    private String nomCours;
-    private String nomChien;
-    private LocalDate dateInscription;
+    private String sessionName;
+    private String courseName;
+    private String dogName;
+    private LocalDate registrationDate;
     private String status;
 }

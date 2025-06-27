@@ -1,9 +1,9 @@
 package com.flavio.paxcanina.controller;
 
-import com.flavio.paxcanina.dao.UtilisateurDao;
+import com.flavio.paxcanina.dao.UserDao;
 import com.flavio.paxcanina.dto.LoginRequest;
-import com.flavio.paxcanina.dto.ProprietaireRegistrationDTO;
-import com.flavio.paxcanina.model.Proprietaire;
+import com.flavio.paxcanina.dto.OwnerRegistrationDto;
+import com.flavio.paxcanina.model.Owner;
 import com.flavio.paxcanina.security.AppUserDetails;
 import com.flavio.paxcanina.service.JwtService;
 import jakarta.validation.Valid;
@@ -25,37 +25,37 @@ import java.time.LocalDate;
 @CrossOrigin(origins = "http://localhost:4200")
 public class AuthController {
 
-    private final UtilisateurDao utilisateurDao;
+    private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
 
     @Autowired
     public AuthController(
-            UtilisateurDao utilisateurDao,
+            UserDao userDao,
             PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager,
             JwtService jwtService
     ) {
-        this.utilisateurDao = utilisateurDao;
+        this.userDao = userDao;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
     }
 
-    @PostMapping("/register/proprietaire")
-    public ResponseEntity<?> registerProprietaire(@RequestBody @Valid ProprietaireRegistrationDTO dto) {
-        Proprietaire p = new Proprietaire();
-        p.setNom(dto.getNom());
-        p.setPrenom(dto.getPrenom());
-        p.setEmail(dto.getEmail());
-        p.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
-        p.setTelephone(dto.getTelephone());
-        p.setDateInscription(LocalDate.now());
-        p.setAdresse(dto.getAdresse());
-        p.setVille(dto.getVille());
-        p.setCodePostal(dto.getCodePostal());
-        utilisateurDao.save(p);
+    @PostMapping("/register/owner")
+    public ResponseEntity<?> registerOwner(@RequestBody @Valid OwnerRegistrationDto dto) {
+        Owner owner = new Owner();
+        owner.setLastName(dto.getLastName());
+        owner.setFirstName(dto.getFirstName());
+        owner.setEmail(dto.getEmail());
+        owner.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
+        owner.setPhone(dto.getPhone());
+        owner.setRegistrationDate(LocalDate.now());
+        owner.setAddress(dto.getAddress());
+        owner.setCity(dto.getCity());
+        owner.setPostalCode(dto.getPostalCode());
+        userDao.save(owner);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

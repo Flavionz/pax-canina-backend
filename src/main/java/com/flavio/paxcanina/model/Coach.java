@@ -9,18 +9,18 @@ import java.util.Set;
 @Setter
 @Entity
 @Table(name = "coach")
-public class Coach extends Utilisateur {
+public class Coach extends User {
 
-    // Specializzazioni del coach (Agility, Obedience, ecc.)
+    // The coach's specializations (Agility, Obedience, etc.)
     @ManyToMany
     @JoinTable(
-            name = "coach_specialisation",
-            joinColumns = @JoinColumn(name = "id_utilisateur"),
-            inverseJoinColumns = @JoinColumn(name = "id_specialisation")
+            name = "coach_specialization", // Updated join table name
+            joinColumns = @JoinColumn(name = "id_user"), // Updated FK name
+            inverseJoinColumns = @JoinColumn(name = "id_specialization") // Updated FK name
     )
-    private Set<Specialisation> specialisations;
+    private Set<Specialization> specializations;
 
-    // Tutte le sessioni che il coach dirige
+    // All sessions managed by this coach
     @OneToMany(mappedBy = "coach")
     private Set<Session> sessions;
 

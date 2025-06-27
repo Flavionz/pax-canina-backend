@@ -3,7 +3,6 @@ package com.flavio.paxcanina.model;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -22,42 +21,42 @@ public class Session {
     @Column(name = "date", nullable = false)
     private LocalDate date;
 
-    @Column(name = "heure_debut")
-    private LocalTime heureDebut;
+    @Column(name = "start_time")
+    private LocalTime startTime;
 
-    @Column(name = "heure_fin")
-    private LocalTime heureFin;
+    @Column(name = "end_time")
+    private LocalTime endTime;
 
     @Column(name = "description")
     private String description;
 
-    @Column(name = "lieu")
-    private String lieu;
+    @Column(name = "location")
+    private String location;
 
-    @Column(name = "capacite_max")
-    private Integer capaciteMax;
+    @Column(name = "max_capacity")
+    private Integer maxCapacity;
 
-    @Column(name = "img_url")
-    private String imgUrl;
+    @Column(name = "image_url")
+    private String imageUrl;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "niveau")
-    private Niveau niveau;
+    @Column(name = "level")
+    private Level level; // enum Level { BEGINNER, INTERMEDIATE, ADVANCED }
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tranche", nullable = false)
-    private TrancheAge trancheAge;
+    @JoinColumn(name = "id_age_group", nullable = false)
+    private AgeGroup ageGroup; // ex TrancheAge
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_cours", nullable = false)
-    private Cours cours;
+    @JoinColumn(name = "id_course", nullable = false)
+    private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_utilisateur", nullable = false)
+    @JoinColumn(name = "id_coach", nullable = false)
     private Coach coach;
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Inscription> inscriptions;
+    private List<Registration> registrations;
 
     public Session() {}
 }

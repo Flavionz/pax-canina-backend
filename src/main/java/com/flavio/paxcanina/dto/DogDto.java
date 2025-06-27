@@ -5,17 +5,15 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
-@Setter
 @Getter
+@Setter
 public class DogDto {
-    private Integer idChien;
-    private String nom;
-    private String race;
-    private LocalDate dateNaissance;
-    private String sexe;
-    private Double poids;
-    private String numeroPuce;
+    private Integer idDog;
+    private String name;
+    private String breed;          // Breed name or code, adapt as needed
+    private LocalDate birthDate;
+    private String sex;            // Consider using Enum in the future
+    private Double weight;
+    private String chipNumber;
     private String photoUrl;
-
-
 }

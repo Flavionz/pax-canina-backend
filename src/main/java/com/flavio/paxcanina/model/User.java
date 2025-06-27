@@ -12,22 +12,22 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Entity
-@Table(name = "utilisateur")
+@Table(name = "user") // Renamed table from "utilisateur" to "user"
 @Inheritance(strategy = InheritanceType.JOINED)
-public abstract class Utilisateur {
+public abstract class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_utilisateur")
-    protected Integer idUtilisateur;
+    @Column(name = "id_user") // Renamed from id_utilisateur
+    protected Integer idUser;
 
     @NotBlank
-    @Column(name = "nom", nullable = false)
-    protected String nom;
+    @Column(name = "last_name", nullable = false) // Renamed from nom
+    protected String lastName;
 
     @NotBlank
-    @Column(name = "prenom", nullable = false)
-    protected String prenom;
+    @Column(name = "first_name", nullable = false) // Renamed from prenom
+    protected String firstName;
 
     @NotBlank
     @Email
@@ -38,11 +38,11 @@ public abstract class Utilisateur {
     @Column(name = "password_hash", nullable = false)
     protected String passwordHash;
 
-    @Column(name = "telephone")
-    protected String telephone;
+    @Column(name = "phone")
+    protected String phone;
 
-    @Column(name = "date_inscription", nullable = false)
-    protected LocalDate dateInscription;
+    @Column(name = "registration_date", nullable = false) // Renamed from date_inscription
+    protected LocalDate registrationDate;
 
     @Column(name = "avatar_url")
     protected String avatarUrl;
@@ -53,7 +53,7 @@ public abstract class Utilisateur {
     @Column(name = "last_login")
     protected LocalDateTime lastLogin;
 
-    // Restituisce il ruolo in base al tipo di classe figlia
+    // Returns the role based on the subclass type
     @Transient
     public String getRole() {
         return this.getClass().getSimpleName().toUpperCase();

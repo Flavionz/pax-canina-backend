@@ -1,7 +1,7 @@
 package com.flavio.paxcanina.security;
 
-import com.flavio.paxcanina.dao.UtilisateurDao;
-import com.flavio.paxcanina.model.Utilisateur;
+import com.flavio.paxcanina.dao.UserDao;
+import com.flavio.paxcanina.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,17 +11,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class AppUserDetailsService implements UserDetailsService {
 
-    private final UtilisateurDao utilisateurDao;
+    private final UserDao userDao;
 
     @Autowired
-    public AppUserDetailsService(UtilisateurDao utilisateurDao) {
-        this.utilisateurDao = utilisateurDao;
+    public AppUserDetailsService(UserDao userDao) {
+        this.userDao = userDao;
     }
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Utilisateur utilisateur = utilisateurDao.findByEmail(email)
+        User user = userDao.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé: " + email));
-        return new AppUserDetails(utilisateur);
+        return new AppUserDetails(user);
     }
 }

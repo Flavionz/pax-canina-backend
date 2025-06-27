@@ -5,11 +5,13 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class AdminProfileDto {
+public class UserDto {
+    private Integer id;
     private String lastName;
     private String firstName;
+    private String email;
+    private String phone;
+    private String role;
     private String avatarUrl;
     private String bio;
-    private String phone;
-    private String email;
 }

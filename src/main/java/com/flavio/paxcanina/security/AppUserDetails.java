@@ -2,8 +2,8 @@ package com.flavio.paxcanina.security;
 
 import com.flavio.paxcanina.model.Admin;
 import com.flavio.paxcanina.model.Coach;
-import com.flavio.paxcanina.model.Proprietaire;
-import com.flavio.paxcanina.model.Utilisateur;
+import com.flavio.paxcanina.model.Owner;
+import com.flavio.paxcanina.model.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,10 +15,10 @@ import java.util.List;
 @Getter
 public class AppUserDetails implements UserDetails {
 
-    private final Utilisateur utilisateur;
+    private final User user;
 
-    public AppUserDetails(Utilisateur utilisateur) {
-        this.utilisateur = utilisateur;
+    public AppUserDetails(User user) {
+        this.user = user;
     }
 
     @Override
@@ -27,34 +27,34 @@ public class AppUserDetails implements UserDetails {
     }
 
     /**
-     * Ritorna la stringa del ruolo ("ADMIN", "COACH", "PROPRIETAIRE" o "UTILISATEUR").
+     * Returns the user's role as a string ("ADMIN", "COACH", "OWNER", or "USER").
      */
     public String getRole() {
-        if (utilisateur instanceof Admin)         return "ADMIN";
-        if (utilisateur instanceof Coach)         return "COACH";
-        if (utilisateur instanceof Proprietaire)  return "PROPRIETAIRE";
-        return "UTILISATEUR";
+        if (user instanceof Admin)  return "ADMIN";
+        if (user instanceof Coach)  return "COACH";
+        if (user instanceof Owner)  return "OWNER";
+        return "USER";
     }
 
     /**
-     * Ritorna l'oggetto Admin per l'utente loggato, o lancia un'eccezione se non è un Admin.
-     * Utilizzato da AdminService.getCurrentAdmin(...)
+     * Returns the Admin object for the logged-in user,
+     * or throws an exception if the user is not an Admin.
      */
     public Admin getAdmin() {
-        if (utilisateur instanceof Admin) {
-            return (Admin) utilisateur;
+        if (user instanceof Admin) {
+            return (Admin) user;
         }
-        throw new IllegalStateException("L'utente corrente non è un Admin");
+        throw new IllegalStateException("Current user is not an Admin");
     }
 
     @Override
     public String getPassword() {
-        return utilisateur.getPasswordHash();
+        return user.getPasswordHash();
     }
 
     @Override
     public String getUsername() {
-        return utilisateur.getEmail();
+        return user.getEmail();
     }
 
     @Override

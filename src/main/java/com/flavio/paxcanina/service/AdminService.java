@@ -1,10 +1,10 @@
 package com.flavio.paxcanina.service;
 
 import com.flavio.paxcanina.dao.AdminDao;
-import com.flavio.paxcanina.dao.UtilisateurDao;
+import com.flavio.paxcanina.dao.UserDao;
 import com.flavio.paxcanina.dto.AdminProfileDto;
 import com.flavio.paxcanina.model.Admin;
-import com.flavio.paxcanina.model.Utilisateur;
+import com.flavio.paxcanina.model.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,86 +16,86 @@ import java.util.List;
 public class AdminService {
 
     private final AdminDao adminDao;
-    private final UtilisateurDao utilisateurDao;
+    private final UserDao userDao;
 
-    public AdminService(AdminDao adminDao,
-                        UtilisateurDao utilisateurDao) {
+    public AdminService(AdminDao adminDao, UserDao userDao) {
         this.adminDao = adminDao;
-        this.utilisateurDao = utilisateurDao;
+        this.userDao = userDao;
     }
 
-
+    /** Get all admins */
     public List<Admin> findAllAdmins() {
         return adminDao.findAll();
     }
 
-
+    /** Promote a user to admin role (returns the Admin entity) */
     @Transactional
-    public Admin promoteToAdmin(int utilisateurId) {
-        // 1) carica l’utente
-        Utilisateur u = utilisateurDao.findById(utilisateurId)
+    public Admin promoteToAdmin(int userId) {
+        User u = userDao.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Utilisateur non trouvé avec l’id " + utilisateurId
+                        "User not found with id " + userId
                 ));
 
-        if (!adminDao.existsById(utilisateurId)) {
+        if (!adminDao.existsById(userId)) {
             Admin admin = new Admin();
-            admin.setIdUtilisateur(u.getIdUtilisateur());
-            admin.setNom(u.getNom());
-            admin.setPrenom(u.getPrenom());
+            admin.setIdUser(u.getIdUser());
+            admin.setLastName(u.getLastName());
+            admin.setFirstName(u.getFirstName());
             admin.setEmail(u.getEmail());
             admin.setPasswordHash(u.getPasswordHash());
-            admin.setTelephone(u.getTelephone());
-            admin.setDateInscription(u.getDateInscription());
+            admin.setPhone(u.getPhone());
+            admin.setRegistrationDate(u.getRegistrationDate());
             admin.setAvatarUrl(u.getAvatarUrl());
             admin.setBio(u.getBio());
             admin.setLastLogin(u.getLastLogin());
             return adminDao.save(admin);
         }
 
-        return adminDao.findById(utilisateurId)
+        // Already an admin, just return it
+        return adminDao.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.INTERNAL_SERVER_ERROR,
-                        "Admin record inconsistente per l’utente " + utilisateurId
+                        "Inconsistent admin record for user " + userId
                 ));
     }
 
-
+    /** Remove admin privileges (delete Admin record) */
     @Transactional
     public void removeAdmin(int id) {
         Admin adm = adminDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
-                        "Admin non trouvé avec l’id " + id
+                        "Admin not found with id " + id
                 ));
         adminDao.delete(adm);
     }
 
-
+    /** Save or update admin entity */
     public Admin save(Admin admin) {
         return adminDao.save(admin);
     }
 
+    /** Convert an Admin entity to a profile DTO */
     public AdminProfileDto toProfileDto(Admin admin) {
         AdminProfileDto dto = new AdminProfileDto();
-        dto.setNom(admin.getNom());
-        dto.setPrenom(admin.getPrenom());
+        dto.setLastName(admin.getLastName());
+        dto.setFirstName(admin.getFirstName());
         dto.setAvatarUrl(admin.getAvatarUrl());
         dto.setBio(admin.getBio());
-        dto.setTelephone(admin.getTelephone());
+        dto.setPhone(admin.getPhone());
         dto.setEmail(admin.getEmail());
         return dto;
     }
 
-
+    /** Update admin profile from DTO */
     @Transactional
     public Admin updateProfile(Admin admin, AdminProfileDto dto) {
-        admin.setNom(dto.getNom());
-        admin.setPrenom(dto.getPrenom());
+        admin.setLastName(dto.getLastName());
+        admin.setFirstName(dto.getFirstName());
         admin.setAvatarUrl(dto.getAvatarUrl());
         admin.setBio(dto.getBio());
-        admin.setTelephone(dto.getTelephone());
+        admin.setPhone(dto.getPhone());
         return adminDao.save(admin);
     }
 }

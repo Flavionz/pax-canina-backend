@@ -8,6 +8,6 @@ import lombok.Setter;
 @Setter
 @Entity
 @Table(name = "admin")
-public class Admin extends Utilisateur {
+public class Admin extends User {
     public Admin() {}
 }
