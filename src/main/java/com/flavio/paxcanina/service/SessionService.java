@@ -144,7 +144,7 @@ public class SessionService {
         // Age group
         if (s.getAgeGroup() != null) {
             dto.setAgeGroupId(s.getAgeGroup().getIdAgeGroup());
-            dto.setAgeGroupName(s.getAgeGroup().getName());
+            dto.setAgeGroupName(s.getAgeGroup().getName().name());
             dto.setMinAge(s.getAgeGroup().getMinAge());
             dto.setMaxAge(s.getAgeGroup().getMaxAge());
         }

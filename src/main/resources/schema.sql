@@ -1,3 +1,4 @@
+-- USER & ROLES
 CREATE TABLE IF NOT EXISTS user (
                                     id_user INT AUTO_INCREMENT PRIMARY KEY,
                                     last_name VARCHAR(50) NOT NULL,
@@ -17,9 +18,8 @@ CREATE TABLE IF NOT EXISTS admin (
     );
 
 CREATE TABLE IF NOT EXISTS coach (
-                                     id_user INT NOT NULL,
-                                     PRIMARY KEY (id_user),
-    FOREIGN KEY (id_user) REFERENCES user(id_user)
+                                     id_user INT PRIMARY KEY,
+                                     FOREIGN KEY (id_user) REFERENCES user(id_user)
     );
 
 CREATE TABLE IF NOT EXISTS owner (
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS owner (
     FOREIGN KEY (id_user) REFERENCES user(id_user)
     );
 
+-- SPECIALIZATION & COACH SPECIALIZATION
 CREATE TABLE IF NOT EXISTS specialization (
                                               id_specialization INT AUTO_INCREMENT PRIMARY KEY,
                                               name VARCHAR(100) NOT NULL
@@ -43,6 +44,7 @@ CREATE TABLE IF NOT EXISTS coach_specialization (
     FOREIGN KEY (id_specialization) REFERENCES specialization(id_specialization)
     );
 
+-- COURSE & RELATIONS
 CREATE TABLE IF NOT EXISTS course (
                                       id_course INT AUTO_INCREMENT PRIMARY KEY,
                                       name VARCHAR(100) NOT NULL,
@@ -59,13 +61,15 @@ CREATE TABLE IF NOT EXISTS course_specialization (
     FOREIGN KEY (id_specialization) REFERENCES specialization(id_specialization)
     );
 
+-- AGE GROUP (fasce d'età per sessioni/cani)
 CREATE TABLE IF NOT EXISTS age_group (
                                          id_age_group INT AUTO_INCREMENT PRIMARY KEY,
-                                         name VARCHAR(100) NOT NULL,
-    age_min INT,
-    age_max INT
+                                         name VARCHAR(100) NOT NULL,      -- Enum: PUPPY/JUNIOR/ADULT/SENIOR
+    min_age INT,                     -- In mesi!
+    max_age INT                      -- In mesi, può essere NULL
     );
 
+-- SESSION
 CREATE TABLE IF NOT EXISTS session (
                                        id_session INT AUTO_INCREMENT PRIMARY KEY,
                                        date DATE NOT NULL,
@@ -78,17 +82,19 @@ CREATE TABLE IF NOT EXISTS session (
     image_url VARCHAR(255),
     id_course INT NOT NULL,
     id_age_group INT NOT NULL,
-    id_user INT NOT NULL, -- Coach who created the session
+    id_user INT NOT NULL,            -- Coach who created the session
     FOREIGN KEY (id_course) REFERENCES course(id_course),
     FOREIGN KEY (id_age_group) REFERENCES age_group(id_age_group),
     FOREIGN KEY (id_user) REFERENCES coach(id_user)
     );
 
+-- BREED
 CREATE TABLE IF NOT EXISTS breed (
                                      id_breed INT AUTO_INCREMENT PRIMARY KEY,
                                      name VARCHAR(100) NOT NULL
     );
 
+-- DOG
 CREATE TABLE IF NOT EXISTS dog (
                                    id_dog INT AUTO_INCREMENT PRIMARY KEY,
                                    name VARCHAR(50) NOT NULL,
@@ -103,6 +109,7 @@ CREATE TABLE IF NOT EXISTS dog (
     FOREIGN KEY (id_breed) REFERENCES breed(id_breed)
     );
 
+-- REGISTRATION
 CREATE TABLE IF NOT EXISTS registration (
                                             id_registration INT AUTO_INCREMENT PRIMARY KEY,
                                             registration_date DATE NOT NULL,
