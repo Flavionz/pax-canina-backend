@@ -32,7 +32,10 @@ public class DogServiceImpl implements DogService {
         return dogDao.findByOwnerIdUser(ownerId)
                 .stream().map(this::toDto).collect(Collectors.toList());
     }
-
+    @Override
+    public Dog findById(Integer id) {
+        return dogDao.findById(id).orElse(null);
+    }
     /**
      * Create a new dog for a specific owner.
      */
@@ -107,7 +110,6 @@ public class DogServiceImpl implements DogService {
         d.setWeight(dto.getWeight());
         d.setChipNumber(dto.getChipNumber());
         d.setPhotoUrl(dto.getPhotoUrl());
-        // d.setBreed(...); // handle if needed
         return d;
     }
 }

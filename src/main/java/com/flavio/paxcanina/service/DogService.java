@@ -1,6 +1,8 @@
 package com.flavio.paxcanina.service;
 
 import com.flavio.paxcanina.dto.DogDto;
+import com.flavio.paxcanina.model.Dog;
+
 import java.util.List;
 
 /**
@@ -8,6 +10,9 @@ import java.util.List;
  * Provides CRUD operations and business logic related to dogs and their owners.
  */
 public interface DogService {
+
+    Dog findById(Integer id);
+
 
     /**
      * Find all dogs belonging to a specific owner.

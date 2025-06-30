@@ -104,6 +104,10 @@ public class SessionService {
         Session saved = sessionDao.save(existing);
         return toDto(saved);
     }
+    public Session findEntityById(Integer id) {
+        return sessionDao.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
+    }
 
     @Transactional
     public void delete(int id) {
