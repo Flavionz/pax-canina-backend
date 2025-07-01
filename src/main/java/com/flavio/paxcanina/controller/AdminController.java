@@ -1,6 +1,6 @@
 package com.flavio.paxcanina.controller;
 
-import com.flavio.paxcanina.dto.AdminProfileDto;
+import  com.flavio.paxcanina.dto.AdminProfileDto;
 import com.flavio.paxcanina.model.Admin;
 import com.flavio.paxcanina.security.AppUserDetails;
 import com.flavio.paxcanina.service.AdminService;

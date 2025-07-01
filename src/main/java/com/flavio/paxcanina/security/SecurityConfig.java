@@ -69,43 +69,50 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
 
                         // 2) Course endpoints: GET requests are public, other methods restricted to ADMIN
-                        .requestMatchers(HttpMethod.GET,  "/api/course/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/course/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/api/course/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,   "/api/course/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT,    "/api/course/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/course/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/course/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/course/**").hasRole("ADMIN")
 
-                        // 3) User management endpoints: ADMIN only
+                        // 3) AgeGroup endpoints: GET is public, CRUD only for ADMIN or COACH
+                        .requestMatchers(HttpMethod.GET, "/api/age-group/**").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/age-group/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/age-group/**").hasAnyRole("ADMIN", "COACH")
+                        .requestMatchers(HttpMethod.PUT, "/api/age-group/**").hasAnyRole("ADMIN", "COACH")
+                        .requestMatchers(HttpMethod.DELETE, "/api/age-group/**").hasAnyRole("ADMIN", "COACH")
+
+                        // 4) User management endpoints: ADMIN only
                         .requestMatchers("/api/user/**").hasRole("ADMIN")
 
-                        // 4) Specialization management: ADMIN only
+                        // 5) Specialization management: ADMIN only
                         .requestMatchers("/api/specialization/**").hasRole("ADMIN")
 
-                        // 5) Session endpoints: GET requests are public
-                        .requestMatchers(HttpMethod.GET,  "/api/session/**").permitAll()
+                        // 6) Session endpoints: GET requests are public
+                        .requestMatchers(HttpMethod.GET, "/api/session/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/api/session/**").permitAll()
 
-                        // 6) Session creation, update, and deletion: restricted to ADMIN and COACH
-                        .requestMatchers(HttpMethod.POST,   "/api/session/**").hasAnyRole("ADMIN", "COACH")
-                        .requestMatchers(HttpMethod.PUT,    "/api/session/**").hasAnyRole("ADMIN", "COACH")
+                        // 7) Session creation, update, and deletion: restricted to ADMIN and COACH
+                        .requestMatchers(HttpMethod.POST, "/api/session/**").hasAnyRole("ADMIN", "COACH")
+                        .requestMatchers(HttpMethod.PUT, "/api/session/**").hasAnyRole("ADMIN", "COACH")
                         .requestMatchers(HttpMethod.DELETE, "/api/session/**").hasAnyRole("ADMIN", "COACH")
 
-                        // 7) Dog registration to session: allowed for ADMIN (all dogs) and OWNER (only their own dogs)
+                        // 8) Dog registration to session: allowed for ADMIN (all dogs) and OWNER (only their own dogs)
                         .requestMatchers(HttpMethod.POST, "/api/session/*/registration").hasAnyRole("ADMIN", "OWNER")
 
-                        // 8) Dog management endpoints: ADMIN only (CRUD). Owner-specific endpoints are under /api/owner/**
+                        // 9) Dog management endpoints: ADMIN only (CRUD). Owner-specific endpoints are under /api/owner/**
                         .requestMatchers("/api/dogs/**").hasRole("ADMIN")
 
-                        // 9) Admin-specific endpoints
+                        // 10) Admin-specific endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // 10) Owner endpoints: authenticated users only (role-based logic in controllers/services)
+                        // 11) Owner endpoints: authenticated users only (role-based logic in controllers/services)
                         .requestMatchers("/api/owner/**").authenticated()
 
-                        // 11) Coach endpoints: authenticated users only (role-based logic in controllers/services)
+                        // 12) Coach endpoints: authenticated users only (role-based logic in controllers/services)
                         .requestMatchers("/api/coach/**").authenticated()
 
-                        // 12) Any other endpoints: authentication required
+                        // 13) Any other endpoints: authentication required
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
