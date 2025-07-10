@@ -52,8 +52,9 @@ public class Session {
     private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_coach", nullable = false)
+    @JoinColumn(name = "id_user", nullable = false)
     private Coach coach;
+
 
     @OneToMany(mappedBy = "session", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Registration> registrations;

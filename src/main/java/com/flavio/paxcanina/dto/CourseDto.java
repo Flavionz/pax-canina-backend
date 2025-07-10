@@ -1,5 +1,7 @@
 package com.flavio.paxcanina.dto;
 
+import java.util.List;
+
 public class CourseDto {
     private Integer idCourse;
     private String name;
@@ -7,14 +9,18 @@ public class CourseDto {
     private String status;
     private String imageUrl;
 
+    // Specializations associated with this course (list of specialization IDs)
+    private List<Integer> specializationIds;
+
     public CourseDto() {}
 
-    public CourseDto(Integer idCourse, String name, String description, String status, String imageUrl) {
+    public CourseDto(Integer idCourse, String name, String description, String status, String imageUrl, List<Integer> specializationIds) {
         this.idCourse = idCourse;
         this.name = name;
         this.description = description;
         this.status = status;
         this.imageUrl = imageUrl;
+        this.specializationIds = specializationIds;
     }
 
     // Getters & Setters
@@ -32,4 +38,7 @@ public class CourseDto {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public List<Integer> getSpecializationIds() { return specializationIds; }
+    public void setSpecializationIds(List<Integer> specializationIds) { this.specializationIds = specializationIds; }
 }

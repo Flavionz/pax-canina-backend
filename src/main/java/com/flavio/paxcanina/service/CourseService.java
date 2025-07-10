@@ -1,26 +1,30 @@
 package com.flavio.paxcanina.service;
 
 import com.flavio.paxcanina.dao.CourseDao;
+import com.flavio.paxcanina.dao.SpecializationDao;
 import com.flavio.paxcanina.dto.CourseDto;
 import com.flavio.paxcanina.model.Course;
+import com.flavio.paxcanina.model.Specialization;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class CourseService {
 
     private final CourseDao courseDao;
+    private final SpecializationDao specializationDao;
 
-    public CourseService(CourseDao courseDao) {
+    public CourseService(CourseDao courseDao, SpecializationDao specializationDao) {
         this.courseDao = courseDao;
+        this.specializationDao = specializationDao;
     }
 
-    /** Returns all courses (for admin/coach/owner) */
+    /** Returns all courses with their main details and specializations */
     public List<CourseDto> findAll() {
         return courseDao.findAll().stream()
                 .map(this::toDto)
@@ -37,7 +41,7 @@ public class CourseService {
         return toDto(c);
     }
 
-    /** Creates a new course */
+    /** Creates a new course with its associated specializations */
     @Transactional
     public CourseDto create(CourseDto dto) {
         Course c = toEntity(dto);
@@ -45,7 +49,7 @@ public class CourseService {
         return toDto(saved);
     }
 
-    /** Updates an existing course */
+    /** Updates an existing course and its associated specializations */
     @Transactional
     public CourseDto update(int id, CourseDto dto) {
         Course existing = courseDao.findById(id)
@@ -58,6 +62,18 @@ public class CourseService {
         existing.setDescription(dto.getDescription());
         existing.setStatus(dto.getStatus());
         existing.setImageUrl(dto.getImageUrl());
+
+        // Update specializations if provided
+        if (dto.getSpecializationIds() != null) {
+            Set<Specialization> specializations = new HashSet<>();
+            for (Integer specId : dto.getSpecializationIds()) {
+                Specialization s = specializationDao.findById(specId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Specialization not found with id " + specId));
+                specializations.add(s);
+            }
+            existing.setSpecializations(specializations);
+        }
+
         Course saved = courseDao.save(existing);
         return toDto(saved);
     }
@@ -75,22 +91,48 @@ public class CourseService {
 
     // ————————
     // Manual mappers: Entity <-> DTO
+
+    /**
+     * Maps Course entity to CourseDto, including associated specializations (as IDs).
+     */
     private CourseDto toDto(Course c) {
+        List<Integer> specializationIds = null;
+        if (c.getSpecializations() != null) {
+            specializationIds = c.getSpecializations()
+                    .stream()
+                    .map(Specialization::getIdSpecialization)
+                    .collect(Collectors.toList());
+        }
         return new CourseDto(
                 c.getIdCourse(),
                 c.getName(),
                 c.getDescription(),
                 c.getStatus(),
-                c.getImageUrl()
+                c.getImageUrl(),
+                specializationIds
         );
     }
 
+    /**
+     * Maps CourseDto to Course entity, resolving associated specializations by their IDs.
+     */
     private Course toEntity(CourseDto dto) {
         Course c = new Course();
         c.setName(dto.getName());
         c.setDescription(dto.getDescription());
         c.setStatus(dto.getStatus());
         c.setImageUrl(dto.getImageUrl());
+
+        // Resolve and associate specializations if provided
+        if (dto.getSpecializationIds() != null) {
+            Set<Specialization> specializations = new HashSet<>();
+            for (Integer specId : dto.getSpecializationIds()) {
+                Specialization s = specializationDao.findById(specId)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Specialization not found with id " + specId));
+                specializations.add(s);
+            }
+            c.setSpecializations(specializations);
+        }
         return c;
     }
 }
