@@ -31,21 +31,21 @@ public class CourseController {
     }
 
     // Only ADMIN can create/update/delete courses
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<CourseDto> create(@RequestBody CourseDto dto) {
         CourseDto created = courseService.create(dto);
         return ResponseEntity.status(201).body(created);
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<CourseDto> update(@PathVariable int id,
                                             @RequestBody CourseDto dto) {
         return ResponseEntity.ok(courseService.update(id, dto));
     }
 
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id) {
         courseService.delete(id);

@@ -26,4 +26,5 @@ public class Owner extends User {
     private Set<Dog> dogs = new HashSet<>();
 
     public Owner() {}
+    public Owner(User u) { super(u); }
 }

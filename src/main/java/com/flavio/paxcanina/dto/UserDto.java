@@ -1,5 +1,6 @@
 package com.flavio.paxcanina.dto;
 
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,4 +15,5 @@ public class UserDto {
     private String role;
     private String avatarUrl;
     private String bio;
+    private List<String> specializations;  // <-- AGGIUNGILO QUI!
 }

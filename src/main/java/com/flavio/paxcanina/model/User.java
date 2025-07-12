@@ -5,28 +5,29 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
-
+import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@NoArgsConstructor
 @Entity
-@Table(name = "user") // Renamed table from "utilisateur" to "user"
+@Table(name = "user")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_user") // Renamed from id_utilisateur
+    @Column(name = "id_user")
     protected Integer idUser;
 
     @NotBlank
-    @Column(name = "last_name", nullable = false) // Renamed from nom
+    @Column(name = "last_name", nullable = false)
     protected String lastName;
 
     @NotBlank
-    @Column(name = "first_name", nullable = false) // Renamed from prenom
+    @Column(name = "first_name", nullable = false)
     protected String firstName;
 
     @NotBlank
@@ -41,7 +42,7 @@ public abstract class User {
     @Column(name = "phone")
     protected String phone;
 
-    @Column(name = "registration_date", nullable = false) // Renamed from date_inscription
+    @Column(name = "registration_date", nullable = false)
     protected LocalDate registrationDate;
 
     @Column(name = "avatar_url")
@@ -53,19 +54,22 @@ public abstract class User {
     @Column(name = "last_login")
     protected LocalDateTime lastLogin;
 
-    // Returns the role based on the subclass type
+    // Costruttore di copia
+    public User(User u) {
+        this.idUser = u.idUser;
+        this.lastName = u.lastName;
+        this.firstName = u.firstName;
+        this.email = u.email;
+        this.passwordHash = u.passwordHash;
+        this.phone = u.phone;
+        this.registrationDate = u.registrationDate;
+        this.avatarUrl = u.avatarUrl;
+        this.bio = u.bio;
+        this.lastLogin = u.lastLogin;
+    }
+
     @Transient
     public String getRole() {
         return this.getClass().getSimpleName().toUpperCase();
-    }
-
-    @Transient
-    public String getPassword() {
-        return this.passwordHash;
-    }
-
-    @Transient
-    public void setPassword(String password) {
-        this.passwordHash = password;
     }
 }

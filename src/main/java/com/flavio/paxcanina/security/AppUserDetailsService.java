@@ -21,7 +21,7 @@ public class AppUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userDao.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Utilisateur non trouvé: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + email));
         return new AppUserDetails(user);
     }
 }

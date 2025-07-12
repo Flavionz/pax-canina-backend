@@ -4,13 +4,14 @@ import com.flavio.paxcanina.dao.AdminDao;
 import com.flavio.paxcanina.dao.CoachDao;
 import com.flavio.paxcanina.dao.OwnerDao;
 import com.flavio.paxcanina.dao.UserDao;
+import com.flavio.paxcanina.dao.SpecializationDao;
 import com.flavio.paxcanina.dto.UserDto;
 import com.flavio.paxcanina.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,10 +21,11 @@ public class UserService {
     @Autowired private OwnerDao ownerDao;
     @Autowired private CoachDao coachDao;
     @Autowired private AdminDao adminDao;
+    @Autowired private SpecializationDao specializationDao;
     @Autowired private PasswordEncoder passwordEncoder;
 
-    // Utility: map entity to dto
-    private UserDto toDto(User u) {
+    // Convert Entity -> DTO
+    private UserDto toDto(com.flavio.paxcanina.model.User u) {
         UserDto dto = new UserDto();
         dto.setId(u.getIdUser());
         dto.setLastName(u.getLastName());
@@ -32,22 +34,26 @@ public class UserService {
         dto.setPhone(u.getPhone());
         dto.setAvatarUrl(u.getAvatarUrl());
         dto.setBio(u.getBio());
-        // Dynamic role based on class type
-        if (u instanceof Admin) dto.setRole("ADMIN");
-        else if (u instanceof Coach) dto.setRole("COACH");
-        else if (u instanceof Owner) dto.setRole("OWNER");
+        if (adminDao.existsById(u.getIdUser())) dto.setRole("ADMIN");
+        else if (coachDao.existsById(u.getIdUser())) {
+            dto.setRole("COACH");
+            Coach coach = coachDao.findById(u.getIdUser()).orElse(null);
+            if (coach != null && coach.getSpecializations() != null) {
+                List<String> specs = coach.getSpecializations()
+                        .stream()
+                        .map(Specialization::getName)
+                        .collect(Collectors.toList());
+                dto.setSpecializations(specs);
+            }
+        }
+        else if (ownerDao.existsById(u.getIdUser())) dto.setRole("OWNER");
         else dto.setRole("USER");
         return dto;
     }
 
-    private User fromDto(UserDto dto) {
-        // Build instance according to role
-        User u;
-        switch (dto.getRole()) {
-            case "ADMIN" -> u = new Admin();
-            case "COACH" -> u = new Coach();
-            default -> u = new Owner();
-        }
+    // Convert DTO -> Entity (Owner by default)
+    private com.flavio.paxcanina.model.User fromDto(UserDto dto) {
+        com.flavio.paxcanina.model.User u = new Owner();
         u.setLastName(dto.getLastName());
         u.setFirstName(dto.getFirstName());
         u.setEmail(dto.getEmail());
@@ -57,6 +63,7 @@ public class UserService {
         return u;
     }
 
+    // List all users
     public List<UserDto> findAll() {
         return userDao.findAll().stream()
                 .map(this::toDto)
@@ -69,70 +76,82 @@ public class UserService {
                 .orElse(null);
     }
 
+    // Crea nuovo utente (Admin, Coach, Owner)
     public UserDto create(UserDto dto) {
-        User u = fromDto(dto);
-        u.setPasswordHash(passwordEncoder.encode("TempPassword123")); // Set a temp password
-        u.setRegistrationDate(java.time.LocalDate.now());
-        userDao.save(u);
-        return toDto(u);
+        if (userDao.findByEmail(dto.getEmail()).isPresent()) {
+            throw new RuntimeException("Email already exists!");
+        }
+        com.flavio.paxcanina.model.User baseUser = fromDto(dto);
+        baseUser.setPasswordHash(passwordEncoder.encode("TempPassword123"));
+        baseUser.setRegistrationDate(java.time.LocalDate.now());
+        userDao.save(baseUser);
+
+        switch (dto.getRole()) {
+            case "ADMIN" -> adminDao.save(new Admin(baseUser));
+            case "COACH" -> {
+                Coach coach = new Coach(baseUser);
+                if (dto.getSpecializations() != null && !dto.getSpecializations().isEmpty()) {
+                    Set<Specialization> specializations = dto.getSpecializations().stream()
+                            .map(name -> specializationDao.findByName(name)
+                                    .orElseThrow(() -> new RuntimeException("Specialization not found: " + name)))
+                            .collect(Collectors.toSet());
+                    coach.setSpecializations(specializations);
+                }
+                coachDao.save(coach);
+            }
+            default -> ownerDao.save(new Owner(baseUser));
+        }
+        return toDto(baseUser);
     }
 
     public UserDto update(Integer id, UserDto dto) {
-        var opt = userDao.findById(id);
+        Optional<com.flavio.paxcanina.model.User> opt = userDao.findById(id);
         if (opt.isEmpty()) return null;
-        User u = opt.get();
+        com.flavio.paxcanina.model.User u = opt.get();
+
         u.setLastName(dto.getLastName());
         u.setFirstName(dto.getFirstName());
         u.setPhone(dto.getPhone());
         u.setAvatarUrl(dto.getAvatarUrl());
         u.setBio(dto.getBio());
+
+        // Aggiorna specializzazioni se coach
+        if (u instanceof Coach coach) {
+            if (dto.getSpecializations() != null) {
+                Set<Specialization> specializations = dto.getSpecializations().stream()
+                        .map(name -> specializationDao.findByName(name)
+                                .orElseThrow(() -> new RuntimeException("Specialization not found: " + name)))
+                        .collect(Collectors.toSet());
+                coach.setSpecializations(specializations);
+            } else {
+                coach.setSpecializations(Collections.emptySet());
+            }
+        }
+
         userDao.save(u);
         return toDto(u);
     }
 
     public void delete(Integer id) {
+        adminDao.findById(id).ifPresent(adminDao::delete);
+        coachDao.findById(id).ifPresent(coachDao::delete);
+        ownerDao.findById(id).ifPresent(ownerDao::delete);
         userDao.deleteById(id);
     }
 
     public UserDto promoteToRole(Integer id, String role) {
-        var opt = userDao.findById(id);
+        Optional<com.flavio.paxcanina.model.User> opt = userDao.findById(id);
         if (opt.isEmpty()) return null;
-        User u = opt.get();
+        com.flavio.paxcanina.model.User u = opt.get();
 
-        // Promote user to a new role (convert entity type)
-        if ("ADMIN".equalsIgnoreCase(role) && !(u instanceof Admin)) {
-            Admin admin = new Admin();
-            copyData(u, admin);
-            adminDao.save(admin);
-            userDao.delete(u);
-            return toDto(admin);
+        if ("ADMIN".equalsIgnoreCase(role) && !adminDao.existsById(u.getIdUser())) {
+            adminDao.save(new Admin(u));
         }
-        if ("COACH".equalsIgnoreCase(role) && !(u instanceof Coach)) {
-            Coach coach = new Coach();
-            copyData(u, coach);
+        if ("COACH".equalsIgnoreCase(role) && !coachDao.existsById(u.getIdUser())) {
+            Coach coach = new Coach(u);
+            coach.setSpecializations(Collections.emptySet());
             coachDao.save(coach);
-            userDao.delete(u);
-            return toDto(coach);
         }
-        if ("OWNER".equalsIgnoreCase(role) && !(u instanceof Owner)) {
-            Owner owner = new Owner();
-            copyData(u, owner);
-            ownerDao.save(owner);
-            userDao.delete(u);
-            return toDto(owner);
-        }
-        return toDto(u); // Already the right role
-    }
-
-    // Utility: Copy data between entities (except password/email/id!)
-    private void copyData(User from, User to) {
-        to.setLastName(from.getLastName());
-        to.setFirstName(from.getFirstName());
-        to.setEmail(from.getEmail());
-        to.setPhone(from.getPhone());
-        to.setBio(from.getBio());
-        to.setAvatarUrl(from.getAvatarUrl());
-        to.setPasswordHash(from.getPasswordHash());
-        to.setRegistrationDate(from.getRegistrationDate());
+        return toDto(u);
     }
 }

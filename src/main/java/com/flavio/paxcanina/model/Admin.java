@@ -10,4 +10,6 @@ import lombok.Setter;
 @Table(name = "admin")
 public class Admin extends User {
     public Admin() {}
+    public Admin(User u) { super(u); }
 }
+

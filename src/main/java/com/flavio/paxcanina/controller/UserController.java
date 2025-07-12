@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 @CrossOrigin(origins = "http://localhost:4200")
 @PreAuthorize("hasRole('ADMIN')")
 public class UserController {
@@ -22,13 +22,13 @@ public class UserController {
         this.userService = userService;
     }
 
-    // GET /api/user
+    // GET /api/users
     @GetMapping
     public List<UserDto> list() {
         return userService.findAll();
     }
 
-    // GET /api/user/{id}
+    // GET /api/users/{id}
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> get(@PathVariable Integer id) {
         UserDto user = userService.findById(id);
@@ -36,14 +36,19 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    // POST /api/user (create any user type - specify via 'role' in dto)
+    // POST /api/users
     @PostMapping
     public ResponseEntity<UserDto> create(@RequestBody UserDto dto) {
-        UserDto created = userService.create(dto);
-        return ResponseEntity.status(201).body(created);
+        try {
+            UserDto created = userService.create(dto);
+            return ResponseEntity.status(201).body(created);
+        } catch (RuntimeException e) {
+            // Gestione errore email già esistente o altro
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 
-    // PUT /api/user/{id}
+    // PUT /api/users/{id}
     @PutMapping("/{id}")
     public ResponseEntity<UserDto> update(@PathVariable Integer id, @RequestBody UserDto dto) {
         UserDto updated = userService.update(id, dto);
@@ -51,21 +56,28 @@ public class UserController {
         return ResponseEntity.ok(updated);
     }
 
-    // DELETE /api/user/{id}
+    // DELETE /api/users/{id}
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         userService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
-    // PROMOTE USER (owner -> coach/admin etc)
+    /**
+     * Promote a user to a new role (ADMIN or COACH).
+     * Esempio: POST /api/users/5/promote?role=COACH
+     */
     @PostMapping("/{id}/promote")
     public ResponseEntity<UserDto> promote(
             @PathVariable Integer id,
-            @RequestParam String role // ex: "COACH", "ADMIN"
+            @RequestParam String role // "ADMIN" oppure "COACH"
     ) {
-        UserDto promoted = userService.promoteToRole(id, role);
-        if (promoted == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(promoted);
+        try {
+            UserDto promoted = userService.promoteToRole(id, role);
+            if (promoted == null) return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(promoted);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
     }
 }

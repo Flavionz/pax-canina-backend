@@ -1,5 +1,5 @@
 -- ========================================
--- 1. UTENTI & RUOLI (USER, ADMIN, COACH, OWNER)
+-- 1. USERS & ROLES (USER, ADMIN, COACH, OWNER)
 -- ========================================
 CREATE TABLE IF NOT EXISTS user (
                                     id_user INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,11 +33,12 @@ CREATE TABLE IF NOT EXISTS owner (
     );
 
 -- ========================================
--- 2. SPECIALIZZAZIONI
+-- 2. SPECIALIZATIONS
 -- ========================================
 CREATE TABLE IF NOT EXISTS specialization (
                                               id_specialization INT AUTO_INCREMENT PRIMARY KEY,
-                                              name VARCHAR(100) NOT NULL
+                                              name VARCHAR(100) NOT NULL,
+    description VARCHAR(255)
     );
 
 CREATE TABLE IF NOT EXISTS coach_specialization (
@@ -49,7 +50,7 @@ CREATE TABLE IF NOT EXISTS coach_specialization (
     );
 
 -- ========================================
--- 3. CORSI & RELAZIONI
+-- 3. COURSES & RELATIONS
 -- ========================================
 CREATE TABLE IF NOT EXISTS course (
                                       id_course INT AUTO_INCREMENT PRIMARY KEY,
@@ -68,17 +69,17 @@ CREATE TABLE IF NOT EXISTS course_specialization (
     );
 
 -- ========================================
--- 4. AGE GROUPS (ENUM come STRING)
+-- 4. AGE GROUPS (ENUM as STRING)
 -- ========================================
 CREATE TABLE IF NOT EXISTS age_group (
                                          id_age_group INT AUTO_INCREMENT PRIMARY KEY,
                                          name VARCHAR(100) NOT NULL,      -- Enum: PUPPY/JUNIOR/YOUNG_ADULT/ADULT
-    min_age INT,                     -- In mesi (INT)
-    max_age INT                      -- In mesi, può essere NULL
+    min_age INT,                     -- In months (INT)
+    max_age INT                      -- In months, can be NULL
     );
 
 -- ========================================
--- 5. SESSIONI (usa coach, course, age_group)
+-- 5. SESSIONS (uses coach, course, age_group)
 -- ========================================
 CREATE TABLE IF NOT EXISTS session (
                                        id_session INT AUTO_INCREMENT PRIMARY KEY,
@@ -92,14 +93,14 @@ CREATE TABLE IF NOT EXISTS session (
     image_url VARCHAR(255),
     id_course INT NOT NULL,
     id_age_group INT NOT NULL,
-    id_user INT NOT NULL,            -- Coach che crea la sessione
+    id_user INT NOT NULL,            -- Coach creating the session
     FOREIGN KEY (id_course) REFERENCES course(id_course) ON DELETE CASCADE,
     FOREIGN KEY (id_age_group) REFERENCES age_group(id_age_group) ON DELETE CASCADE,
     FOREIGN KEY (id_user) REFERENCES coach(id_user) ON DELETE CASCADE
     );
 
 -- ========================================
--- 6. RAZZE
+-- 6. BREEDS
 -- ========================================
 CREATE TABLE IF NOT EXISTS breed (
                                      id_breed INT AUTO_INCREMENT PRIMARY KEY,
@@ -107,7 +108,7 @@ CREATE TABLE IF NOT EXISTS breed (
     );
 
 -- ========================================
--- 7. CANI
+-- 7. DOGS
 -- ========================================
 CREATE TABLE IF NOT EXISTS dog (
                                    id_dog INT AUTO_INCREMENT PRIMARY KEY,
@@ -124,7 +125,7 @@ CREATE TABLE IF NOT EXISTS dog (
     );
 
 -- ========================================
--- 8. REGISTRAZIONI
+-- 8. REGISTRATIONS
 -- ========================================
 CREATE TABLE IF NOT EXISTS registration (
                                             id_registration INT AUTO_INCREMENT PRIMARY KEY,
@@ -136,6 +137,5 @@ CREATE TABLE IF NOT EXISTS registration (
     id_dog INT NOT NULL,
     FOREIGN KEY (id_session) REFERENCES session(id_session) ON DELETE CASCADE,
     FOREIGN KEY (id_dog) REFERENCES dog(id_dog) ON DELETE CASCADE,
-    UNIQUE (id_session, id_dog) -- Ogni cane può essere iscritto una sola volta per sessione
+    UNIQUE (id_session, id_dog) -- Each dog can be registered only once per session
     );
-

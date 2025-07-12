@@ -11,18 +11,17 @@ import java.util.Set;
 @Table(name = "coach")
 public class Coach extends User {
 
-    // The coach's specializations (Agility, Obedience, etc.)
     @ManyToMany
     @JoinTable(
-            name = "coach_specialization", // Updated join table name
-            joinColumns = @JoinColumn(name = "id_user"), // Updated FK name
-            inverseJoinColumns = @JoinColumn(name = "id_specialization") // Updated FK name
+            name = "coach_specialization",
+            joinColumns = @JoinColumn(name = "id_user"),
+            inverseJoinColumns = @JoinColumn(name = "id_specialization")
     )
     private Set<Specialization> specializations;
 
-    // All sessions managed by this coach
     @OneToMany(mappedBy = "coach")
     private Set<Session> sessions;
 
     public Coach() {}
+    public Coach(User u) { super(u); }
 }

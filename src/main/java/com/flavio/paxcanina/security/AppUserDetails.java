@@ -26,9 +26,6 @@ public class AppUserDetails implements UserDetails {
         return List.of(new SimpleGrantedAuthority("ROLE_" + getRole()));
     }
 
-    /**
-     * Returns the user's role as a string ("ADMIN", "COACH", "OWNER", or "USER").
-     */
     public String getRole() {
         if (user instanceof Admin)  return "ADMIN";
         if (user instanceof Coach)  return "COACH";
@@ -36,20 +33,14 @@ public class AppUserDetails implements UserDetails {
         return "USER";
     }
 
-    /**
-     * Returns the Admin object for the logged-in user,
-     * or throws an exception if the user is not an Admin.
-     */
     public Admin getAdmin() {
-        if (user instanceof Admin) {
-            return (Admin) user;
-        }
+        if (user instanceof Admin) return (Admin) user;
         throw new IllegalStateException("Current user is not an Admin");
     }
 
     @Override
     public String getPassword() {
-        return user.getPasswordHash();
+        return user.getPasswordHash(); // <-- usa il campo giusto!
     }
 
     @Override
@@ -58,22 +49,14 @@ public class AppUserDetails implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
+    public boolean isAccountNonExpired() { return true; }
 
     @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+    public boolean isAccountNonLocked() { return true; }
 
     @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
+    public boolean isCredentialsNonExpired() { return true; }
 
     @Override
-    public boolean isEnabled() {
-        return true;
-    }
+    public boolean isEnabled() { return true; }
 }
