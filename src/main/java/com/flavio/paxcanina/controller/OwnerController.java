@@ -146,6 +146,8 @@ public class OwnerController {
         }).collect(Collectors.toList());
         dto.setRegistrations(registrationsDto);
 
+        dto.setRole("OWNER");
+
         return dto;
     }
 }

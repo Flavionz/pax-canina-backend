@@ -10,7 +10,6 @@ import java.util.Optional;
 
 @Repository
 public interface OwnerDao extends JpaRepository<Owner, Integer> {
-
     @Query("""
         SELECT o FROM Owner o
         LEFT JOIN FETCH o.dogs d

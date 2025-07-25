@@ -9,6 +9,10 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Base class for all user types (Admin, Coach, Owner).
+ * Includes common fields and logic.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -54,7 +58,12 @@ public abstract class User {
     @Column(name = "last_login")
     protected LocalDateTime lastLogin;
 
-    // Costruttore di copia
+    @Column(name = "email_verified", nullable = false)
+    protected boolean emailVerified = false;
+
+    /**
+     * Copy constructor.
+     */
     public User(User u) {
         this.idUser = u.idUser;
         this.lastName = u.lastName;
@@ -66,8 +75,12 @@ public abstract class User {
         this.avatarUrl = u.avatarUrl;
         this.bio = u.bio;
         this.lastLogin = u.lastLogin;
+        this.emailVerified = u.emailVerified;
     }
 
+    /**
+     * Returns the user's role based on the subclass name.
+     */
     @Transient
     public String getRole() {
         return this.getClass().getSimpleName().toUpperCase();

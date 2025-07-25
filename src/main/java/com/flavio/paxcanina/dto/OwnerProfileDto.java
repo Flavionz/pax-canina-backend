@@ -22,4 +22,6 @@ public class OwnerProfileDto {
     private LocalDate registrationDate;
     private List<DogDto> dogs = new ArrayList<>();
     private List<RegistrationDto> registrations = new ArrayList<>();
+    private String role;
+
 }

@@ -11,7 +11,8 @@ CREATE TABLE IF NOT EXISTS user (
     registration_date DATE NOT NULL,
     avatar_url VARCHAR(255),
     bio TEXT,
-    last_login DATETIME
+    last_login DATETIME,
+    email_verified BOOLEAN NOT NULL DEFAULT false   -- NEW FIELD: Email verified
     );
 
 CREATE TABLE IF NOT EXISTS admin (

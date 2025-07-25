@@ -10,9 +10,9 @@ import java.time.LocalDate;
 public class DogDto {
     private Integer idDog;
     private String name;
-    private String breed;          // Breed name or code, adapt as needed
+    private String breed;
     private LocalDate birthDate;
-    private String sex;            // Consider using Enum in the future
+    private String sex;
     private Double weight;
     private String chipNumber;
     private String photoUrl;
