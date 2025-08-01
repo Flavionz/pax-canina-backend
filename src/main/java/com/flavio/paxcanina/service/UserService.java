@@ -7,11 +7,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 
 /**
+ * UserService
+ * -----------
  * Service responsible for user management (CRUD),
  * role-specific entity handling (Admin/Coach/Owner),
  * and email validation token management.
@@ -27,7 +31,8 @@ public class UserService {
     private final OwnerDao ownerDao;
     private final SpecializationDao specializationDao;
     private final EmailService emailService;
-    private final ValidationTokenDao validationTokenDao; // <- Only DAO, no external service
+    private final ValidationTokenDao validationTokenDao;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Retrieve all users as DTOs.
@@ -51,7 +56,12 @@ public class UserService {
 
     /**
      * Create a new user (Admin/Coach/Owner).
-     * Automatically sends a validation email with a unique token.
+     * If called by an admin, automatically generates a temporary password,
+     * saves the user, generates a validation token and sends an onboarding email
+     * in French containing both the temporary password and the validation link.
+     *
+     * @param dto UserDto containing user info
+     * @return UserDto of the created user
      */
     @Transactional
     public UserDto create(UserDto dto) {
@@ -78,11 +88,15 @@ public class UserService {
         user.setPhone(dto.getPhone());
         user.setAvatarUrl(dto.getAvatarUrl());
         user.setBio(dto.getBio());
-        user.setPasswordHash(null); // password will be set after validation
+
+        // 4. Generate a secure temporary password and store hashed version
+        String tempPassword = generateTemporaryPassword();
+        user.setPasswordHash(passwordEncoder.encode(tempPassword)); // BCrypt hash
+
         user.setRegistrationDate(java.time.LocalDate.now());
         user.setEmailVerified(false);
 
-        // 4. Save user and related role entity
+        // 5. Save user and role-specific sub-entity
         user = userDao.save(user);
 
         if (user instanceof Owner owner) {
@@ -102,12 +116,12 @@ public class UserService {
             adminDao.save(admin);
         }
 
-        // 5. Generate and persist the email validation token
+        // 6. Generate and persist the email validation token
         ValidationToken token = createValidationToken(user, 60);
-        String validationUrl = "http://localhost:4200/validate-email/" + token.getToken();
+        String validationUrl = "http://localhost:4200/auth/validate-email/" + token.getToken();
 
-        // 6. Send validation email
-        emailService.sendValidationEmail(user.getEmail(), validationUrl);
+        // 7. Send onboarding email (French: temp password + validation link)
+        emailService.sendAccountCreatedEmail(user.getEmail(), tempPassword, validationUrl);
 
         log.info("[UserService] User created id={}", user.getIdUser());
         return toDto(user);
@@ -186,6 +200,8 @@ public class UserService {
 
     /**
      * Promote or update user (with role change support).
+     * Handles both changing the user's role (and corresponding sub-entity)
+     * and updating user base information.
      */
     @Transactional
     public UserDto promoteAndUpdate(Integer id, UserDto dto) {
@@ -230,6 +246,9 @@ public class UserService {
 
     // ======= Private helpers for sub-entity management =======
 
+    /**
+     * Delete the sub-entity associated with the specified role.
+     */
     private void deleteSubEntity(Integer id, String role) {
         log.info("[deleteSubEntity] Deleting from {} id_user={}", role.toLowerCase(), id);
         switch (role) {
@@ -239,6 +258,9 @@ public class UserService {
         }
     }
 
+    /**
+     * Create the sub-entity for the requested role.
+     */
     private void createSubEntity(User user, String requestedRole, UserDto dto) {
         switch (requestedRole) {
             case "OWNER" -> {
@@ -263,6 +285,9 @@ public class UserService {
         }
     }
 
+    /**
+     * Update the sub-entity for the user's current role.
+     */
     private void updateSubEntity(User user, String role, UserDto dto) {
         switch (role) {
             case "OWNER" -> {
@@ -286,7 +311,22 @@ public class UserService {
     }
 
     /**
-     * Map User entity to UserDto.
+     * Generates a secure random temporary password (12 alphanumeric characters).
+     * Used for admin-created users. Never sent or stored in clear text.
+     */
+    private String generateTemporaryPassword() {
+        int length = 12; // recommended for security
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder(length);
+        Random random = new SecureRandom();
+        for (int i = 0; i < length; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Maps User entity to UserDto for data transfer.
      */
     private UserDto toDto(User user) {
         UserDto dto = new UserDto();
@@ -309,8 +349,6 @@ public class UserService {
                 dto.setSpecializations(specIds);
             }
         }
-
-
         return dto;
     }
 }

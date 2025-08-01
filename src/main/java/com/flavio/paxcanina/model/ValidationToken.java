@@ -2,11 +2,21 @@ package com.flavio.paxcanina.model;
 
 import jakarta.persistence.*;
 import lombok.Getter;
-
+import lombok.Setter;
+import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
+/**
+ * ValidationToken
+ * ---------------
+ * Entity representing a temporary token used for email validation or password reset.
+ * Linked to a single user (many-to-one).
+ */
 @Getter
+@Setter
+@NoArgsConstructor
 @Entity
+@Table(name = "validation_token")
 public class ValidationToken {
 
     @Id
@@ -19,21 +29,16 @@ public class ValidationToken {
     @Column(nullable = false)
     private LocalDateTime expiryDate;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    public ValidationToken() {}
-
+    /**
+     * All-args constructor (utility).
+     */
     public ValidationToken(String token, LocalDateTime expiryDate, User user) {
         this.token = token;
         this.expiryDate = expiryDate;
         this.user = user;
     }
-
-    public void setToken(String token) { this.token = token; }
-
-    public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }
-
-    public void setUser(User user) { this.user = user; }
 }

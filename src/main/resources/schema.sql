@@ -34,6 +34,17 @@ CREATE TABLE IF NOT EXISTS owner (
     );
 
 -- ========================================
+-- 0. VALIDATION TOKENS (NEW FOR EMAIL VALIDATION)
+-- ========================================
+
+CREATE TABLE IF NOT EXISTS validation_token (
+                                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                                token VARCHAR(255) NOT NULL UNIQUE,
+    expiry_date DATETIME NOT NULL,
+    user_id INT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id_user) ON DELETE CASCADE
+    );
+-- ========================================
 -- 2. SPECIALIZATIONS
 -- ========================================
 CREATE TABLE IF NOT EXISTS specialization (

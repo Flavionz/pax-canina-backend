@@ -38,6 +38,16 @@ services:
     depends_on:
       - mysql
 
+  maildev:
+    image: maildev/maildev
+    container_name: paxcanina-maildev
+    restart: always
+    ports:
+      - "1080:1080"   # Web UI
+      - "1025:1025"   # SMTP (usato da Spring Boot)
+    environment:
+      - MAILDEV_INCOMING_USER=
+      - MAILDEV_INCOMING_PASS=
 
 volumes:
   mysql_data:
