@@ -38,6 +38,11 @@ public class AppUserDetails implements UserDetails {
         throw new IllegalStateException("Current user is not an Admin");
     }
 
+    public Coach getCoach() {
+        return (user instanceof Coach) ? (Coach) user : null;
+    }
+
+
     @Override
     public String getPassword() {
         return user.getPasswordHash(); // <-- usa il campo giusto!

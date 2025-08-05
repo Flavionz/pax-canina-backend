@@ -19,6 +19,15 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * SessionService
+ * --------------
+ * Handles business logic for CRUD and queries on sessions.
+ * Maps between Session and SessionDto.
+ * - Public GET queries (no security)
+ * - Create/Update/Delete: checked in Controller via @PreAuthorize
+ * - Status always set, safe from null/empty edge cases
+ */
 @Service
 public class SessionService {
 
@@ -39,29 +48,35 @@ public class SessionService {
         this.ageGroupDao = ageGroupDao;
     }
 
+    // Get all sessions (public)
     public List<SessionDto> findAll() {
         return sessionDao.findAll().stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    // Find session by ID (public)
     public SessionDto findById(int id) {
         Session s = sessionDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
         return toDto(s);
     }
 
+    // Find sessions by course (public)
     public List<SessionDto> findByCourseId(Integer courseId) {
         return sessionDao.findByCourse_IdCourse(courseId)
                 .stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    // Find sessions by date (public)
     public List<SessionDto> findByDate(java.time.LocalDate date) {
         return sessionDao.findByDate(date).stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    // Find sessions by date range (public)
     public List<SessionDto> findByDateBetween(java.time.LocalDate start, java.time.LocalDate end) {
         return sessionDao.findByDateBetween(start, end).stream().map(this::toDto).collect(Collectors.toList());
     }
 
+    // Create session (admin/coach)
     @Transactional
     public SessionDto create(SessionDto dto) {
         Session s = toEntity(dto);
@@ -69,6 +84,7 @@ public class SessionService {
         return toDto(saved);
     }
 
+    // Update session (admin/coach)
     @Transactional
     public SessionDto update(int id, SessionDto dto) {
         Session existing = sessionDao.findById(id)
@@ -104,11 +120,14 @@ public class SessionService {
         Session saved = sessionDao.save(existing);
         return toDto(saved);
     }
+
+    // Utility: find entity for internal use (not exposed as API)
     public Session findEntityById(Integer id) {
         return sessionDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
     }
 
+    // Delete session (admin/coach)
     @Transactional
     public void delete(int id) {
         Session existing = sessionDao.findById(id)
@@ -118,6 +137,11 @@ public class SessionService {
 
     // --- Mapping methods ---
 
+    /**
+     * Maps Session entity to SessionDto.
+     * - Handles null safety for all fields.
+     * - Computes registrationsCount and status ("full"/"available") always.
+     */
     private SessionDto toDto(Session s) {
         SessionDto dto = new SessionDto();
         dto.setIdSession(s.getIdSession());
@@ -148,17 +172,20 @@ public class SessionService {
             dto.setMinAge(s.getAgeGroup().getMinAge());
             dto.setMaxAge(s.getAgeGroup().getMaxAge());
         }
-        // Registrations & Status
-        if (s.getRegistrations() != null) {
-            dto.setRegistrationsCount(s.getRegistrations().size());
-            dto.setStatus(
-                    s.getMaxCapacity() != null && s.getRegistrations().size() >= s.getMaxCapacity()
-                            ? "full" : "available"
-            );
-        }
+        // Registrations & Status - always set!
+        int regCount = (s.getRegistrations() != null) ? s.getRegistrations().size() : 0;
+        dto.setRegistrationsCount(regCount);
+        dto.setStatus(
+                s.getMaxCapacity() != null && regCount >= s.getMaxCapacity()
+                        ? "full" : "available"
+        );
         return dto;
     }
 
+    /**
+     * Maps SessionDto to Session entity (for save/update).
+     * - Only sets relations if present.
+     */
     private Session toEntity(SessionDto dto) {
         Session s = new Session();
         s.setIdSession(dto.getIdSession());
