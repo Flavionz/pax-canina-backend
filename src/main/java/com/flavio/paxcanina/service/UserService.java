@@ -46,6 +46,11 @@ public class UserService {
         return dtos;
     }
 
+    public long countUsers() {
+        return userDao.count();
+    }
+
+
     /**
      * Find a user by ID.
      */

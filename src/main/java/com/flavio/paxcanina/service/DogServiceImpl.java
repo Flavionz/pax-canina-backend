@@ -32,6 +32,12 @@ public class DogServiceImpl implements DogService {
         return dogDao.findByOwnerIdUser(ownerId)
                 .stream().map(this::toDto).collect(Collectors.toList());
     }
+
+    @Override
+    public List<DogDto> findAll() {
+        return dogDao.findAll().stream().map(this::toDto).collect(Collectors.toList());
+    }
+
     @Override
     public Dog findById(Integer id) {
         return dogDao.findById(id).orElse(null);

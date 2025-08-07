@@ -13,6 +13,9 @@ public interface DogService {
 
     Dog findById(Integer id);
 
+    List<DogDto> findAll();
+
+
 
     /**
      * Find all dogs belonging to a specific owner.

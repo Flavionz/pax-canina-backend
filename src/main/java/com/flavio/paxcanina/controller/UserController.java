@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @RestController
@@ -28,6 +29,13 @@ public class UserController {
     public List<UserDto> list() {
         return userService.findAll();
     }
+
+    @GetMapping("/count")
+    public ResponseEntity<?> countUsers() {
+        long count = userService.countUsers();
+        return ResponseEntity.ok(Map.of("count", count));
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> get(@PathVariable Integer id) {

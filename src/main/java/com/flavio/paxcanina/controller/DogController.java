@@ -5,6 +5,7 @@ import com.flavio.paxcanina.model.User;
 import com.flavio.paxcanina.security.AppUserDetails;
 import com.flavio.paxcanina.service.DogService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -35,6 +36,14 @@ public class DogController {
         List<DogDto> dtos = dogService.findByOwnerId(ownerId);
         return ResponseEntity.ok(dtos);
     }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<DogDto>> getAllDogs() {
+        List<DogDto> dtos = dogService.findAll();
+        return ResponseEntity.ok(dtos);
+    }
+
 
     /**
      * POST a new dog for the authenticated owner.
