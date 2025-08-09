@@ -5,20 +5,23 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.EqualsAndHashCode;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "dog")
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Dog {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id_dog")
+    @EqualsAndHashCode.Include
     private Integer idDog;
 
     @NotBlank
@@ -50,8 +53,9 @@ public class Dog {
     @JoinColumn(name = "id_breed")
     private Breed breed;
 
+    /** Use Set to avoid "bag" and permettere più fetch-join simultanei. */
     @OneToMany(mappedBy = "dog", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Registration> registrations = new ArrayList<>();
+    private Set<Registration> registrations = new LinkedHashSet<>();
 
     public Dog() {}
 }

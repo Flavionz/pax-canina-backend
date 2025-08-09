@@ -12,8 +12,11 @@ CREATE TABLE IF NOT EXISTS user (
     avatar_url VARCHAR(255),
     bio TEXT,
     last_login DATETIME,
-    email_verified BOOLEAN NOT NULL DEFAULT false   -- NEW FIELD: Email verified
-    );
+    email_verified BOOLEAN NOT NULL DEFAULT false,
+    is_active BOOLEAN NOT NULL DEFAULT true,                -- NEW
+    anonymized_at DATETIME NULL,                             -- NEW
+    last_password_change_at DATETIME NULL                    -- NEW
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS admin (
                                      id_user INT PRIMARY KEY,
@@ -34,23 +37,26 @@ CREATE TABLE IF NOT EXISTS owner (
     );
 
 -- ========================================
--- 0. VALIDATION TOKENS (NEW FOR EMAIL VALIDATION)
+-- 0. VALIDATION TOKENS
 -- ========================================
-
 CREATE TABLE IF NOT EXISTS validation_token (
                                                 id INT AUTO_INCREMENT PRIMARY KEY,
                                                 token VARCHAR(255) NOT NULL UNIQUE,
     expiry_date DATETIME NOT NULL,
-    user_id INT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES user(id_user) ON DELETE CASCADE
+    id_user INT NOT NULL,               -- FIX: coerente con backend
+    purpose VARCHAR(50) NOT NULL,       -- NEW
+    created_at DATETIME NOT NULL,       -- NEW
+    consumed_at DATETIME NULL,          -- NEW
+    FOREIGN KEY (id_user) REFERENCES user(id_user) ON DELETE CASCADE
     );
+
 -- ========================================
 -- 2. SPECIALIZATIONS
 -- ========================================
 CREATE TABLE IF NOT EXISTS specialization (
                                               id_specialization INT AUTO_INCREMENT PRIMARY KEY,
                                               name VARCHAR(100) NOT NULL,
-    description VARCHAR(255)
+    description VARCHAR(255) NULL
     );
 
 CREATE TABLE IF NOT EXISTS coach_specialization (
@@ -81,17 +87,17 @@ CREATE TABLE IF NOT EXISTS course_specialization (
     );
 
 -- ========================================
--- 4. AGE GROUPS (ENUM as STRING)
+-- 4. AGE GROUPS
 -- ========================================
 CREATE TABLE IF NOT EXISTS age_group (
                                          id_age_group INT AUTO_INCREMENT PRIMARY KEY,
-                                         name VARCHAR(100) NOT NULL,      -- Enum: PUPPY/JUNIOR/YOUNG_ADULT/ADULT
-    min_age INT,                     -- In months (INT)
-    max_age INT                      -- In months, can be NULL
+                                         name VARCHAR(100) NOT NULL,
+    min_age INT,
+    max_age INT
     );
 
 -- ========================================
--- 5. SESSIONS (uses coach, course, age_group)
+-- 5. SESSIONS
 -- ========================================
 CREATE TABLE IF NOT EXISTS session (
                                        id_session INT AUTO_INCREMENT PRIMARY KEY,
@@ -105,7 +111,7 @@ CREATE TABLE IF NOT EXISTS session (
     image_url VARCHAR(255),
     id_course INT NOT NULL,
     id_age_group INT NOT NULL,
-    id_user INT NOT NULL,            -- Coach creating the session
+    id_user INT NOT NULL,
     FOREIGN KEY (id_course) REFERENCES course(id_course) ON DELETE CASCADE,
     FOREIGN KEY (id_age_group) REFERENCES age_group(id_age_group) ON DELETE CASCADE,
     FOREIGN KEY (id_user) REFERENCES coach(id_user) ON DELETE CASCADE
@@ -149,5 +155,5 @@ CREATE TABLE IF NOT EXISTS registration (
     id_dog INT NOT NULL,
     FOREIGN KEY (id_session) REFERENCES session(id_session) ON DELETE CASCADE,
     FOREIGN KEY (id_dog) REFERENCES dog(id_dog) ON DELETE CASCADE,
-    UNIQUE (id_session, id_dog) -- Each dog can be registered only once per session
+    UNIQUE (id_session, id_dog)
     );

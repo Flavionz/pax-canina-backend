@@ -3,6 +3,7 @@ package com.flavio.paxcanina.controller;
 import com.flavio.paxcanina.dto.DogDto;
 import com.flavio.paxcanina.dto.RegistrationDto;
 import com.flavio.paxcanina.dto.OwnerProfileDto;
+import com.flavio.paxcanina.mapper.RegistrationMapper;
 import com.flavio.paxcanina.model.Registration;
 import com.flavio.paxcanina.model.Owner;
 import com.flavio.paxcanina.model.User;
@@ -16,6 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * OwnerController
+ * ---------------
+ * Exposes endpoints for managing owner profile and personal dogs.
+ * Uses DTOs and mappers to avoid cyclic entity serialization and ensure a clean API.
+ */
+
 @RestController
 @RequestMapping("/api/owner")
 @CrossOrigin(origins = "http://localhost:4200")
@@ -27,6 +35,11 @@ public class OwnerController {
         this.ownerService = ownerService;
     }
 
+    /**
+     * GET /api/owner/me
+     * Returns profile info of the currently authenticated owner.
+     * Uses DTOs and RegistrationMapper to avoid cyclic references.
+     */
     @GetMapping("/me")
     public ResponseEntity<OwnerProfileDto> getMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
@@ -44,6 +57,10 @@ public class OwnerController {
         return ResponseEntity.ok(dto);
     }
 
+    /**
+     * PUT /api/owner/me
+     * Updates the profile info of the currently authenticated owner.
+     */
     @PutMapping("/me")
     public ResponseEntity<OwnerProfileDto> updateMyProfile(
             @RequestBody OwnerProfileDto dto,
@@ -64,6 +81,10 @@ public class OwnerController {
         }
     }
 
+    /**
+     * DELETE /api/owner/me
+     * Deletes the profile of the currently authenticated owner.
+     */
     @DeleteMapping("/me")
     public ResponseEntity<Void> deleteMyProfile(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
@@ -76,8 +97,11 @@ public class OwnerController {
         return ResponseEntity.noContent().build();
     }
 
-    // --- DTO Mapping ---
+    // --- DTO Mapping Helpers ---
 
+    /**
+     * Maps an OwnerProfileDto to an Owner entity (for updates).
+     */
     private Owner mapDtoToOwner(OwnerProfileDto dto) {
         Owner o = new Owner();
         o.setIdUser(dto.getId());
@@ -93,6 +117,10 @@ public class OwnerController {
         return o;
     }
 
+    /**
+     * Maps an Owner entity to OwnerProfileDto, including dogs and registrations.
+     * Uses RegistrationMapper to avoid code duplication and cyclic JSON issues.
+     */
     private OwnerProfileDto mapOwnerToDto(Owner o) {
         OwnerProfileDto dto = new OwnerProfileDto();
         dto.setId(o.getIdUser());
@@ -134,16 +162,9 @@ public class OwnerController {
                 .toList()
                 : new ArrayList<>();
 
-        List<RegistrationDto> registrationsDto = allRegistrations.stream().map(reg -> {
-            RegistrationDto r = new RegistrationDto();
-            r.setId(reg.getIdRegistration());
-            r.setSessionName(reg.getSession() != null ? reg.getSession().getDescription() : null);
-            r.setCourseName(reg.getSession() != null && reg.getSession().getCourse() != null ? reg.getSession().getCourse().getName() : null);
-            r.setDogName(reg.getDog() != null ? reg.getDog().getName() : null);
-            r.setRegistrationDate(reg.getRegistrationDate());
-            r.setStatus(reg.getStatus());
-            return r;
-        }).collect(Collectors.toList());
+        List<RegistrationDto> registrationsDto = allRegistrations.stream()
+                .map(RegistrationMapper::toDto) // Use mapper instead of duplicating logic!
+                .collect(Collectors.toList());
         dto.setRegistrations(registrationsDto);
 
         dto.setRole("OWNER");

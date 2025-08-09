@@ -2,63 +2,52 @@ package com.flavio.paxcanina.controller;
 
 import com.flavio.paxcanina.dto.UserDto;
 import com.flavio.paxcanina.service.UserService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping(value = "/api/users", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin(origins = "http://localhost:4200")
 @PreAuthorize("hasRole('ADMIN')")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    @Autowired
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
     @GetMapping
-    public List<UserDto> list() {
-        return userService.findAll();
-    }
+    public List<UserDto> list() { return userService.findAll(); }
 
     @GetMapping("/count")
-    public ResponseEntity<?> countUsers() {
-        long count = userService.countUsers();
-        return ResponseEntity.ok(Map.of("count", count));
+    public ResponseEntity<Map<String, Long>> countUsers() {
+        return ResponseEntity.ok(Map.of("count", userService.countUsers()));
     }
-
 
     @GetMapping("/{id}")
     public ResponseEntity<UserDto> get(@PathVariable Integer id) {
         UserDto user = userService.findById(id);
-        if (user == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(user);
+        return (user == null) ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
     }
 
-    @PostMapping
-    public ResponseEntity<UserDto> create(@RequestBody UserDto dto) {
-        try {
-            UserDto created = userService.create(dto);
-            return ResponseEntity.status(201).body(created);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(null);
-        }
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserDto> create(@Valid @RequestBody UserDto dto) {
+        UserDto created = userService.create(dto);
+        return ResponseEntity.created(URI.create("/api/users/" + created.getId())).body(created);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<UserDto> update(@PathVariable Integer id, @RequestBody UserDto dto) {
+    @PutMapping(value = "/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserDto> update(@PathVariable Integer id, @Valid @RequestBody UserDto dto) {
         UserDto updated = userService.update(id, dto);
-        if (updated == null) return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(updated);
+        return (updated == null) ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
@@ -67,19 +56,31 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{id}/full-update")
-    public ResponseEntity<UserDto> fullUpdate(
-            @PathVariable Integer id,
-            @RequestBody UserDto dto
-    ) {
-        try {
-            UserDto updated = userService.promoteAndUpdate(id, dto);
-            log.info("[UserController] Ritorno fullUpdate: {}", updated);
-            if (updated == null) return ResponseEntity.notFound().build();
-            return ResponseEntity.ok(updated);
-        } catch (RuntimeException e) {
-            log.error("[UserController] Errore nel fullUpdate: {}", e.getMessage());
-            return ResponseEntity.badRequest().body(null);
-        }
+    @PutMapping(value = "/{id}/full-update", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<UserDto> fullUpdate(@PathVariable Integer id, @Valid @RequestBody UserDto dto) {
+        UserDto updated = userService.promoteAndUpdate(id, dto);
+        return (updated == null) ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
+    }
+
+    // --- Admin actions ---
+
+    @PostMapping("/{id}/deactivate")
+    public ResponseEntity<Void> deactivate(@PathVariable Integer id) {
+        return userService.deactivateUser(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/activate")
+    public ResponseEntity<Void> activate(@PathVariable Integer id) {
+        return userService.activateUser(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/anonymize")
+    public ResponseEntity<Void> anonymize(@PathVariable Integer id) {
+        return userService.anonymizeUser(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
+    }
+
+    @PostMapping("/{id}/resend-verification")
+    public ResponseEntity<Void> resendVerification(@PathVariable Integer id) {
+        return userService.resendVerificationEmail(id) ? ResponseEntity.noContent().build() : ResponseEntity.notFound().build();
     }
 }

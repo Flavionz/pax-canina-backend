@@ -33,7 +33,7 @@ public class AdminController {
     @GetMapping("/me")
     public AdminProfileDto me(Authentication authentication) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        Admin admin = userDetails.getAdmin();
+        Admin admin = userDetails.getAdminOrThrow(); // <-- qui
         return adminService.toProfileDto(admin);
     }
 
@@ -43,13 +43,14 @@ public class AdminController {
             Authentication authentication
     ) {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        Admin admin = userDetails.getAdmin();
+        Admin admin = userDetails.getAdminOrThrow(); // <-- qui
 
         Admin updated = adminService.updateProfile(admin, dto);
         AdminProfileDto response = adminService.toProfileDto(updated);
         response.setEmail(admin.getEmail());
         return ResponseEntity.ok(response);
     }
+
 
     @PostMapping
     public Admin create(@RequestParam("userId") int userId) {

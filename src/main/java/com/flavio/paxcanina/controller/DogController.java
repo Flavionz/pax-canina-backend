@@ -38,11 +38,11 @@ public class DogController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<DogDto>> getAllDogs() {
         List<DogDto> dtos = dogService.findAll();
         return ResponseEntity.ok(dtos);
     }
+
 
 
     /**

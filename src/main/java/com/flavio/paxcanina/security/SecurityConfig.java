@@ -25,10 +25,12 @@ import java.util.List;
 /**
  * SecurityConfig
  * --------------
- * Main Spring Security configuration for the application.
  * - JWT stateless authentication
- * - Role-based endpoint protection (ADMIN / COACH / OWNER)
- * - Exposes public endpoints for auth, registration, and email validation
+ * - Role-based endpoint protection
+ * - Public endpoints for registration, login, email verification, password reset
+ * - Strict CORS for development (localhost) and production domain
+ *
+ * Jury-ready (2025).
  */
 @Configuration
 @EnableWebSecurity
@@ -45,13 +47,13 @@ public class SecurityConfig {
         this.userDetailsService = userDetailsService;
     }
 
-    /** Password encoder (BCrypt) */
+    /** BCrypt password encoder */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    /** Dao-based authentication provider (standard best practice) */
+    /** Authentication provider (DAO-based) */
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider auth = new DaoAuthenticationProvider();
@@ -60,7 +62,7 @@ public class SecurityConfig {
         return auth;
     }
 
-    /** Expose AuthenticationManager as a Bean */
+    /** Expose AuthenticationManager as Bean */
     @Bean
     public AuthenticationManager authenticationManager(
             org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration authConfig
@@ -68,14 +70,7 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
-    /**
-     * Main filter chain for all HTTP requests.
-     * - Public endpoints:
-     *     /api/auth/**           (login, registration, password reset, etc)
-     *     /api/validate-email/** (email verification with token)
-     *     GET /api/breeds, /api/courses, /api/sessions, /api/age-groups (public data)
-     * - Everything else requires authentication and specific role.
-     */
+    /** Main security filter chain */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -84,62 +79,101 @@ public class SecurityConfig {
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authz -> authz
 
-                        // --- AUTH & EMAIL VALIDATION (public) ---
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/validate-email/**").permitAll()
+                        /* ======================
+                           CORS preflight (always allow)
+                           ====================== */
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // --- BREEDS (public GET/OPTIONS, admin for others) ---
+                        /* ======================
+                           PUBLIC AUTH ENDPOINTS
+                           ====================== */
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login",
+                                "/api/auth/register/**",
+                                "/api/auth/password-reset-request",
+                                "/api/auth/password-reset"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,  "/api/auth/verify-email").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/resend-verification/**").permitAll()
+
+                        /* ======================
+                           PASSWORD CHANGE (authenticated)
+                           ====================== */
+                        .requestMatchers(HttpMethod.POST, "/api/auth/change-password").authenticated()
+
+                        /* ======================
+                           BREEDS (GET public, CRUD admin)
+                           ====================== */
                         .requestMatchers(HttpMethod.GET, "/api/breeds", "/api/breeds/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/breeds", "/api/breeds/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/breeds/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/breeds/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/breeds/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,  "/api/breeds/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/api/breeds/**").hasRole("ADMIN")
 
-                        // --- COURSES (public GET/OPTIONS, admin for others) ---
+                        /* ======================
+                           COURSES (GET public, CRUD admin)
+                           ====================== */
+                        .requestMatchers(HttpMethod.GET, "/api/courses/for-coach/me").hasRole("COACH")
                         .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/courses", "/api/courses/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/courses/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/courses/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,  "/api/courses/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/api/courses/**").hasRole("ADMIN")
 
-                        // --- AGE GROUPS (public GET/OPTIONS, admin/coach for others) ---
+                        /* ======================
+                           AGE GROUPS (GET public, CRUD admin/coach)
+                           ====================== */
                         .requestMatchers(HttpMethod.GET, "/api/age-groups", "/api/age-groups/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/age-groups", "/api/age-groups/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/age-groups/**").hasAnyRole("ADMIN", "COACH")
-                        .requestMatchers(HttpMethod.PUT, "/api/age-groups/**").hasAnyRole("ADMIN", "COACH")
-                        .requestMatchers(HttpMethod.DELETE, "/api/age-groups/**").hasAnyRole("ADMIN", "COACH")
+                        .requestMatchers(HttpMethod.PUT,  "/api/age-groups/**").hasAnyRole("ADMIN", "COACH")
+                        .requestMatchers(HttpMethod.DELETE,"/api/age-groups/**").hasAnyRole("ADMIN", "COACH")
 
-                        // --- USERS MANAGEMENT (admin only) ---
+                        /* ======================
+                           USERS (admin only)
+                           ====================== */
                         .requestMatchers("/api/users/**").hasRole("ADMIN")
 
-                        // --- SPECIALIZATIONS (admin only) ---
-                        .requestMatchers("/api/specializations/**").hasRole("ADMIN")
+                        /* ======================
+                           SPECIALIZATIONS
+                           - GET public (used on homepage/forms)
+                           - Write ops restricted to admin
+                           ====================== */
+                        .requestMatchers(HttpMethod.GET, "/api/specializations", "/api/specializations/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/specializations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT,  "/api/specializations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE,"/api/specializations/**").hasRole("ADMIN")
 
-                        // --- SESSIONS (public GET/OPTIONS, admin/coach for others) ---
-                        .requestMatchers(HttpMethod.GET, "/api/sessions", "/api/sessions/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/sessions", "/api/sessions/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasAnyRole("ADMIN", "COACH")
-                        .requestMatchers(HttpMethod.PUT, "/api/sessions/**").hasAnyRole("ADMIN", "COACH")
-                        .requestMatchers(HttpMethod.DELETE, "/api/sessions/**").hasAnyRole("ADMIN", "COACH")
-
-                        // --- SESSION REGISTRATION (admin + owner) ---
+                        /* ======================
+                           SESSION REGISTRATION
+                           ====================== */
                         .requestMatchers(HttpMethod.POST, "/api/sessions/*/registration").hasAnyRole("ADMIN", "OWNER")
 
-                        // --- DOGS (CRUD for admin and owner) ---
+                        /* ======================
+                           SESSIONS (GET public, CRUD admin/coach)
+                           ====================== */
+                        .requestMatchers(HttpMethod.GET, "/api/sessions", "/api/sessions/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/sessions/**").hasAnyRole("ADMIN", "COACH")
+                        .requestMatchers(HttpMethod.PUT,  "/api/sessions/**").hasAnyRole("ADMIN", "COACH")
+                        .requestMatchers(HttpMethod.DELETE,"/api/sessions/**").hasAnyRole("ADMIN", "COACH")
+
+                        /* ======================
+                           DOGS (admin/owner)
+                           ====================== */
                         .requestMatchers(HttpMethod.GET, "/api/dogs", "/api/dogs/**").hasAnyRole("ADMIN", "OWNER")
                         .requestMatchers(HttpMethod.POST, "/api/dogs/me/**").hasRole("OWNER")
-                        .requestMatchers(HttpMethod.PUT, "/api/dogs/me/**").hasRole("OWNER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/dogs/me/**").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.PUT,  "/api/dogs/me/**").hasRole("OWNER")
+                        .requestMatchers(HttpMethod.DELETE,"/api/dogs/me/**").hasRole("OWNER")
                         .requestMatchers("/api/dogs/**").hasRole("ADMIN")
 
-                        // --- ADMIN ENDPOINTS (admin only) ---
+                        /* ======================
+                           ROLE-SPECIFIC AREAS
+                           (prefix fix: singular)
+                           ====================== */
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/owner/**").authenticated()
+                        .requestMatchers("/api/coach/**").authenticated()
 
-                        // --- OWNER & COACH endpoints (any authenticated user) ---
-                        .requestMatchers("/api/owners/**").authenticated()
-                        .requestMatchers("/api/coaches/**").authenticated()
-
-                        // --- CATCH ALL: authentication required ---
+                        /* ======================
+                           EVERYTHING ELSE
+                           ====================== */
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
@@ -148,17 +182,19 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * Global CORS policy
-     * - Allows requests from all origins (customize for production!)
-     * - Allows all HTTP methods and headers
-     */
+    /** Global CORS policy */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("*")); // TODO: restrict in production!
+
+        // Development
+        config.setAllowedOrigins(List.of("http://localhost:4200"));
+        // Production example:
+        // config.setAllowedOrigins(List.of("https://www.paxcanina.fr"));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

@@ -4,20 +4,16 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * Base class for all user types (Admin, Coach, Owner).
- * Includes common fields and logic.
- */
-@Getter
-@Setter
+@Getter @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "user")
+@Table(name = "user") // ok with InheritanceType.JOINED
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class User {
 
@@ -34,8 +30,7 @@ public abstract class User {
     @Column(name = "first_name", nullable = false)
     protected String firstName;
 
-    @NotBlank
-    @Email
+    @NotBlank @Email
     @Column(name = "email", unique = true, nullable = false)
     protected String email;
 
@@ -61,9 +56,15 @@ public abstract class User {
     @Column(name = "email_verified", nullable = false)
     protected boolean emailVerified = false;
 
-    /**
-     * Copy constructor.
-     */
+    @Column(name = "is_active", nullable = false)
+    protected boolean active = true;
+
+    @Column(name = "anonymized_at")
+    protected LocalDateTime anonymizedAt;
+
+    @Column(name = "last_password_change_at")
+    protected LocalDateTime lastPasswordChangeAt;
+
     public User(User u) {
         this.idUser = u.idUser;
         this.lastName = u.lastName;
@@ -76,13 +77,19 @@ public abstract class User {
         this.bio = u.bio;
         this.lastLogin = u.lastLogin;
         this.emailVerified = u.emailVerified;
+        this.active = u.active;
+        this.anonymizedAt = u.anonymizedAt;
+        this.lastPasswordChangeAt = u.lastPasswordChangeAt;
     }
 
-    /**
-     * Returns the user's role based on the subclass name.
-     */
     @Transient
     public String getRole() {
         return this.getClass().getSimpleName().toUpperCase();
     }
+
+    // Convenience methods (optional but handy)
+    public boolean isAnonymized()        { return anonymizedAt != null; }
+    public void deactivate()             { this.active = false; }
+    public void anonymize()              { this.active = false; this.anonymizedAt = LocalDateTime.now(); }
+    public void markPasswordChanged()    { this.lastPasswordChangeAt = LocalDateTime.now(); }
 }

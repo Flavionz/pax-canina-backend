@@ -3,79 +3,135 @@ package com.flavio.paxcanina.service;
 import com.flavio.paxcanina.security.AppUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
-import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class JwtServiceImpl implements JwtService {
 
+    /**
+     * Base64-encoded HMAC secret (>= 256 bits).
+     * Example .env:
+     *   JWT_SECRET_BASE64=+DDfwrGZSVaPp64FWRK7fdJ0/AQYSvPNEmQafiTkI4k8bFeUBGPE7eesRUmdKFGRibZBmg+sF9t3s5IkPSF8XQ==
+     */
     @Value("${jwt.secret}")
-    private String jwtSecret;
+    private String jwtSecretBase64;
 
-    private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    }
+    /** Access token lifetime in seconds (default 24h). */
+    @Value("${jwt.access.expiration-seconds:86400}")
+    private long accessExpSeconds;
+
+    /** Issuer & Audience for stronger validation. */
+    @Value("${jwt.issuer:pax-canina}")
+    private String issuer;
+
+    @Value("${jwt.audience:web}")
+    private String audience;
+
+    /** Allowed clock skew tolerance for parser. */
+    @Value("${jwt.allowed-skew-seconds:60}")
+    private long allowedSkewSeconds;
+
+    /* =================
+       Public API
+       ================= */
 
     @Override
     public String getRole(AppUserDetails userDetails) {
         return userDetails.getAuthorities().stream()
-                .map(r -> r.getAuthority())
+                .map(a -> a.getAuthority())
                 .findFirst()
                 .orElse(null);
     }
 
     @Override
     public String generateToken(AppUserDetails userDetails, String role) {
-        long expirationMillis = 1000 * 60 * 60 * 24;
-        Date now = new Date();
-        Date expiryDate = new Date(now.getTime() + expirationMillis);
+        final String effectiveRole = (role != null ? role : getRole(userDetails));
+
+        final Instant now = Instant.now();
+        final Instant nbf = now.minusSeconds(5);                // small negative skew for edge devices
+        final Instant exp = now.plusSeconds(accessExpSeconds);  // access token TTL
 
         return Jwts.builder()
+                .header()                              // 0.12.x header builder (no deprecations)
+                .type("JWT")
+                .and()
                 .subject(userDetails.getUsername())
-                .claims(Map.of("role", getRole(userDetails)))
-                .expiration(expiryDate)
+                .issuer(issuer)
+                .audience().add(audience).and()        // single audience value
+                .issuedAt(Date.from(now))
+                .notBefore(Date.from(nbf))
+                .expiration(Date.from(exp))
+                .id(UUID.randomUUID().toString())      // jti for audit
+                .claims(Map.of("role", effectiveRole)) // custom claims
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
-
     @Override
     public String getSubjectFromJwt(String jwt) {
-        return Jwts.parser()
-                .verifyWith(getSigningKey())
-                .build()
-                .parseSignedClaims(jwt)
-                .getPayload()
-                .getSubject();
+        return parseClaims(jwt).getSubject();
     }
 
     @Override
     public boolean isTokenValid(String jwt, UserDetails userDetails) {
         try {
-            final String username = getSubjectFromJwt(jwt);
-            return (username.equals(userDetails.getUsername()) && !isTokenExpired(jwt));
+            Claims c = parseClaims(jwt);
+
+            // subject match
+            String username = c.getSubject();
+            if (username == null || !username.equals(userDetails.getUsername())) return false;
+
+            // expiry guard (parser also checks, but we keep it explicit)
+            Date exp = c.getExpiration();
+            if (exp == null || exp.before(new Date())) return false;
+
+            // issuer check (parser also enforces via requireIssuer)
+            if (!issuer.equals(c.getIssuer())) return false;
+
+            // audience check (aud may be a single string or a list)
+            Object aud = c.get("aud");
+            if (aud instanceof String) {
+                if (!audience.equals(aud)) return false;
+            } else if (aud instanceof Iterable<?> iterable) {
+                boolean ok = false;
+                for (Object v : iterable) if (audience.equals(v)) { ok = true; break; }
+                if (!ok) return false;
+            }
+
+            return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private boolean isTokenExpired(String jwt) {
-        Date expiration = getClaims(jwt).getExpiration();
-        return expiration.before(new Date());
+    /* =================
+       Private helpers
+       ================= */
+
+    private SecretKey getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretBase64);
+        return Keys.hmacShaKeyFor(keyBytes); // HS256/384/512 compatible
     }
 
-    private Claims getClaims(String jwt) {
+    private Claims parseClaims(String jwt) {
         return Jwts.parser()
                 .verifyWith(getSigningKey())
+                .clockSkewSeconds(allowedSkewSeconds)
+                .requireIssuer(issuer)
                 .build()
                 .parseSignedClaims(jwt)
                 .getPayload();
     }
+
 }

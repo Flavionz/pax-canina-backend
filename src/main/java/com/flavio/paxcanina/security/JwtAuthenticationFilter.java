@@ -5,7 +5,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,39 +17,49 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+/**
+ * JwtAuthenticationFilter
+ * -----------------------
+ * Stateless authentication filter that:
+ *  - extracts JWT from "Authorization: Bearer <token>"
+ *  - validates it via JwtService
+ *  - loads UserDetails and sets the SecurityContext
+ *
+ * Notes:
+ *  - The filter is idempotent (skips if context already authenticated).
+ *  - Errors in token parsing/validation are logged and do NOT break the chain.
+ */
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
-    @Autowired
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
-        this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
-    }
-
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
             throws ServletException, IOException {
 
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String jwt = authHeader.substring(7);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        String jwt = authHeader.substring(7);
+
+        try {
             String username = jwtService.getSubjectFromJwt(jwt);
 
+            // Skip if already authenticated
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-                // LOG DI DEBUG
-                System.out.println("Token ricevuto: " + jwt);
-                System.out.println("Username estratto: " + username);
-                System.out.println("UserDetails: " + userDetails);
-                System.out.println("Authorities: " + userDetails.getAuthorities());
-                System.out.println("Token valido? " + jwtService.isTokenValid(jwt, userDetails));
-
-                // >>>>> VALIDAZIONE DEL TOKEN JWT <<<<<
                 if (jwtService.isTokenValid(jwt, userDetails)) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
@@ -58,8 +69,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             );
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    log.debug("JWT not valid for user: {}", username);
                 }
             }
+
+        } catch (Exception e) {
+            // Do not block the chain; just log the problem.
+            log.warn("JWT processing error: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

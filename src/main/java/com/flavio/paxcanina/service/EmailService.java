@@ -2,7 +2,10 @@ package com.flavio.paxcanina.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.lang.NonNull;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
@@ -10,127 +13,138 @@ import org.springframework.stereotype.Service;
 /**
  * EmailService
  * ------------
- * Handles all outgoing email operations (account validation, password reset, account creation, etc).
- * Uses JavaMailSender for sending HTML emails.
+ * Centralized HTML email sender for:
+ *  - account creation (temp password + verify link)
+ *  - email verification
+ *  - password reset
+ *
+ * Notes:
+ *  - Keep content simple and brand-consistent.
+ *  - All templates are inline for now; extract to files if they grow.
  */
+@Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Autowired
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
-    }
+    /** Optional "from" address configured in application.properties; fallback to default if empty. */
+    @Value("${mail.from:}")
+    private String fromAddress;
 
-    /**
-     * Sends an account creation email (for admin-created users),
-     * containing a temporary password and a clickable validation link (all content in French).
-     *
-     * @param to            Recipient's email address
-     * @param tempPassword  Temporary password generated for first login
-     * @param validationUrl Validation link (with unique token)
-     */
-    public void sendAccountCreatedEmail(String to, String tempPassword, String validationUrl) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject("Pax Canina - Votre compte a été créé");
+    /* ===================
+       Public entry points
+       =================== */
 
-            String html = String.format("""
-                <p>Bonjour,</p>
-                <p>Un administrateur a créé un compte pour vous sur <b>Pax Canina</b>.</p>
-                <p>
-                    <b>Votre mot de passe temporaire est&nbsp;:</b><br>
-                    <code style="font-size:1.2em;background:#f5f5f5;padding:4px 8px;border-radius:4px;">%s</code>
-                </p>
-                <p>
-                    Avant de pouvoir accéder à la plateforme, veuillez confirmer votre adresse e-mail en cliquant sur ce lien (valable 60 minutes)&nbsp;:<br>
-                    <a href="%s" style="color:#1976d2;font-weight:bold;text-decoration:underline;">
-                        👉 Cliquez ici pour confirmer votre adresse e-mail
-                    </a>
-                </p>
-                <p>
-                    ⚠️ Après avoir confirmé votre e-mail, connectez-vous avec le mot de passe ci-dessus puis changez-le dans votre profil pour garantir la sécurité de votre compte.
-                </p>
-                <p>
-                    Si vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message.<br>
-                    <br>
-                    Bienvenue dans la communauté <b>Pax Canina</b>&nbsp;!
-                </p>
-            """, tempPassword, validationUrl);
+    public void sendAccountCreatedEmail(@NonNull String to,
+                                        @NonNull String tempPassword,
+                                        @NonNull String validationUrl) {
+        String subject = "Pax Canina - Votre compte a été créé";
 
-            helper.setText(html, true); // true = HTML email
-            mailSender.send(message);
-
-        } catch (MessagingException e) {
-            throw new RuntimeException("Erreur lors de l'envoi de l'e-mail", e);
-        }
-    }
-
-    /**
-     * Sends an account validation email with a clickable link (content in French).
-     *
-     * @param to            Recipient's email address
-     * @param validationUrl Validation link (usually with a unique token)
-     */
-    public void sendValidationEmail(String to, String validationUrl) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject("Pax Canina - Activez votre compte");
-
-            String html = String.format("""
-                <p>Bienvenue sur <b>Pax Canina</b>&nbsp;!</p>
-                <p>
-                    Pour activer votre compte, veuillez cliquer sur le lien ci-dessous (valable 60 minutes)&nbsp;:<br>
-                    <a href="%s" style="color:#1976d2;font-weight:bold;text-decoration:underline;">
-                        👉 Cliquez ici pour activer votre compte
-                    </a>
-                </p>
-                <p>
-                    Si vous n'avez pas demandé ce compte, veuillez ignorer cet e-mail.
-                </p>
-            """, validationUrl);
-
-            helper.setText(html, true);
-            mailSender.send(message);
-
-        } catch (MessagingException e) {
-            throw new RuntimeException("Erreur lors de l'envoi de l'e-mail", e);
-        }
-    }
-
-    /**
-     * Sends a password reset email with a clickable reset link (content in French).
-     *
-     * @param to       Recipient's email address
-     * @param resetUrl Secure password reset link
-     */
-    public void sendPasswordResetEmail(String to, String resetUrl) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject("Pax Canina - Réinitialisation du mot de passe");
-
-            String html = String.format("""
-                <p>Pour réinitialiser votre mot de passe, veuillez cliquer sur le lien ci-dessous (valable 60 minutes)&nbsp;:</p>
+        String html = """
+            <p>Bonjour,</p>
+            <p>Un administrateur a créé un compte pour vous sur <b>Pax Canina</b>.</p>
+            <p>
+                <b>Mot de passe temporaire&nbsp;:</b><br>
+                <code style="font-size:1.1em;background:#f5f5f5;padding:4px 8px;border-radius:4px;">%s</code>
+            </p>
+            <p>
+                Veuillez confirmer votre adresse e-mail (lien valable 60 minutes)&nbsp;:<br>
                 <a href="%s" style="color:#1976d2;font-weight:bold;text-decoration:underline;">
-                    👉 Cliquez ici pour réinitialiser votre mot de passe
+                    👉 Confirmer mon adresse e-mail
                 </a>
-                <p>
-                    Si vous n'avez pas demandé la réinitialisation du mot de passe, veuillez ignorer cet e-mail.
-                </p>
-            """, resetUrl);
+            </p>
+            <p>Après validation, connectez-vous et changez votre mot de passe depuis votre profil.</p>
+            <p style="color:#666">Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>
+            """.formatted(tempPassword, validationUrl);
 
-            helper.setText(html, true);
+        sendHtml(to, subject, html);
+    }
+
+    public void sendValidationEmail(@NonNull String to,
+                                    @NonNull String validationUrl) {
+        String subject = "Pax Canina - Activez votre compte";
+
+        String html = """
+            <p>Bienvenue sur <b>Pax Canina</b> !</p>
+            <p>
+                Pour activer votre compte (lien valable 60 minutes)&nbsp;:<br>
+                <a href="%s" style="color:#1976d2;font-weight:bold;text-decoration:underline;">
+                    👉 Activer mon compte
+                </a>
+            </p>
+            <p style="color:#666">Si vous n'avez pas demandé ce compte, ignorez cet e-mail.</p>
+            """.formatted(validationUrl);
+
+        sendHtml(to, subject, html);
+    }
+
+    public void sendPasswordResetEmail(@NonNull String to,
+                                       @NonNull String resetUrl) {
+        String subject = "Pax Canina - Réinitialisation du mot de passe";
+
+        String html = """
+            <p>Vous avez demandé à réinitialiser votre mot de passe.</p>
+            <p>
+                Cliquez sur le lien ci-dessous (valable 30 minutes)&nbsp;:<br>
+                <a href="%s" style="color:#1976d2;font-weight:bold;text-decoration:underline;">
+                    👉 Réinitialiser mon mot de passe
+                </a>
+            </p>
+            <p style="color:#666">Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.</p>
+            """.formatted(resetUrl);
+
+        sendHtml(to, subject, html);
+    }
+
+    public void sendPasswordChangedEmail(@NonNull String to) {
+        String subject = "Pax Canina - Votre mot de passe a été modifié";
+
+        String html = """
+        <p>Bonjour,</p>
+        <p>Votre mot de passe <b>Pax Canina</b> vient d'être modifié.</p>
+        <p style="margin: 12px 0 0 0;">
+            Si ce n'était pas vous, <b>modifiez-le à nouveau immédiatement</b> et contactez le support.
+        </p>
+        <p style="color:#666;margin-top:12px;">
+            Ceci est un message automatique — aucune réponse n'est requise.
+        </p>
+        """;
+
+        sendHtml(to, subject, html);
+    }
+
+
+    /* ==============
+       Private helper
+       ============== */
+
+    /**
+     * Minimal, reusable HTML sender.
+     * - Sets UTF-8 properly
+     * - Supports optional configured "from" address
+     * - Wraps MessagingException into RuntimeException (service layer simplicity)
+     */
+    private void sendHtml(String to, String subject, String htmlBody) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            // "true" → multipart; ensures proper encoding for some clients
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true); // HTML
+
+            if (fromAddress != null && !fromAddress.isBlank()) {
+                helper.setFrom(fromAddress);
+            }
+
             mailSender.send(message);
+            log.debug("Email sent: to={} subject={}", to, subject);
 
         } catch (MessagingException e) {
-            throw new RuntimeException("Erreur lors de l'envoi de l'e-mail", e);
+            log.error("Email send failed: to={}, subject={}", to, subject, e);
+            throw new RuntimeException("Failed to send email", e);
         }
     }
 }

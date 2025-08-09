@@ -1,72 +1,57 @@
 package com.flavio.paxcanina.dto;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+
 /**
  * UserDto
- * -----------
- * Data Transfer Object for User entity (base class for Admin, Coach, Owner).
- * This DTO is used to transfer user data between the backend and the frontend.
- *
- * Now includes 'emailVerified' to indicate whether the user's email address has been confirmed.
- * This is important for account activation, security, and GDPR compliance.
+ * -------
+ * Safe DTO for admin dashboard & API.
+ * - No passwordHash exposure
+ * - Exposes account state flags (isActive, emailVerified, anonymizedAt)
  */
-@Getter
-@Setter
+@Getter @Setter
 public class UserDto {
 
-    /** Default constructor */
-    public UserDto() {}
-
-    /** Unique identifier for the user */
     private Integer id;
 
-    /** Last name of the user */
+    // Identity
     private String lastName;
-
-    /** First name of the user */
     private String firstName;
-
-    /** User email address (unique, required) */
     private String email;
-
-    /** User phone number */
     private String phone;
 
-    /** Role: ADMIN / COACH / OWNER */
+    // Role: ADMIN / COACH / OWNER
     private String role;
 
-    /** User avatar URL (optional) */
+    // Profile
     private String avatarUrl;
-
-    /** Short biography (optional) */
     private String bio;
 
-    /** Password hash (never sent to the frontend in plaintext) */
-    private String passwordHash;
-
-    /**
-     * NEW: Email verification status
-     * true = verified, false = not verified, null = not set
-     * Used for account validation workflows.
-     */
+    // Account state
     private Boolean emailVerified;
+    private Boolean isActive;
 
-    // --------- OWNER-specific fields ---------
+    // Read-only audit/status
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private LocalDate registrationDate;
 
-    /** Address (OWNER only) */
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime lastLogin;
+
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime anonymizedAt;
+
+    // OWNER-only
     private String address;
-
-    /** City (OWNER only) */
     private String city;
-
-    /** Postal code (OWNER only) */
     private String postalCode;
 
-    // --------- COACH-specific fields ---------
-
-    /** List of specialization IDs (COACH only) */
+    // COACH-only
     private List<Integer> specializations;
 }
