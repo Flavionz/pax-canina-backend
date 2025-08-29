@@ -41,11 +41,11 @@ public class Session {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "level")
-    private Level level; // enum Level { BEGINNER, INTERMEDIATE, ADVANCED }
+    private Level level;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_age_group", nullable = false)
-    private AgeGroup ageGroup; // ex TrancheAge
+    private AgeGroup ageGroup;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_course", nullable = false)

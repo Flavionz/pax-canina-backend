@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Getter @Setter
 @NoArgsConstructor
 @Entity
-@Table(name = "user") // ok with InheritanceType.JOINED
+@Table(name = "user")
 @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class User {
 

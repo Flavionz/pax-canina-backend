@@ -1,30 +1,38 @@
 package com.flavio.paxcanina.mapper;
 
 import com.flavio.paxcanina.dto.RegistrationDto;
+import com.flavio.paxcanina.model.Course;
+import com.flavio.paxcanina.model.Dog;
 import com.flavio.paxcanina.model.Registration;
+import com.flavio.paxcanina.model.Session;
 
-/**
- * RegistrationMapper
- * ------------------
- * Maps Registration entity to RegistrationDto, avoiding entity cycles.
- */
 public class RegistrationMapper {
+
     public static RegistrationDto toDto(Registration reg) {
         RegistrationDto dto = new RegistrationDto();
         dto.setId(reg.getIdRegistration());
-        dto.setSessionName(
-                reg.getSession() != null ? reg.getSession().getDescription() : null
-        );
-        dto.setCourseName(
-                reg.getSession() != null && reg.getSession().getCourse() != null
-                        ? reg.getSession().getCourse().getName() : null
-        );
-        dto.setDogName(
-                reg.getDog() != null ? reg.getDog().getName() : null
-        );
         dto.setRegistrationDate(reg.getRegistrationDate());
         dto.setStatus(reg.getStatus());
+
+        // Dog
+        Dog dog = reg.getDog();
+        if (dog != null) {
+            dto.setDogId(dog.getIdDog());
+            dto.setDogName(dog.getName());
+        }
+
+        // Session + Course
+        Session session = reg.getSession();
+        if (session != null) {
+            dto.setSessionId(session.getIdSession());
+            dto.setSessionName(session.getDescription());
+
+            Course course = session.getCourse();
+            if (course != null) {
+                dto.setCourseId(course.getIdCourse());
+                dto.setCourseName(course.getName());
+            }
+        }
         return dto;
     }
-
 }

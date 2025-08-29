@@ -19,8 +19,9 @@ services:
     ports:
       - "8081:80"
     environment:
-      PMA_HOST: paxcanina-mysql
-      MYSQL_ROOT_PASSWORD: rootpw
+      PMA_HOST: mysql
+      PMA_USER: paxuser
+      PMA_PASSWORD: paxpw
     depends_on:
       - mysql
 
@@ -31,7 +32,7 @@ services:
     ports:
       - "8082:80"
     volumes:
-      - /c/Users/flavi/Desktop/projet-fil-rouge-backend-Flavionz/uploads/public:/usr/share/nginx/html/images
+      - ./uploads/public:/usr/share/nginx/html/images
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     env_file:
       - .env
@@ -43,8 +44,8 @@ services:
     container_name: paxcanina-maildev
     restart: always
     ports:
-      - "1080:1080"   # Web UI
-      - "1025:1025"   # SMTP (usato da Spring Boot)
+      - "1080:1080"
+      - "1025:1025"
     environment:
       - MAILDEV_INCOMING_USER=
       - MAILDEV_INCOMING_PASS=

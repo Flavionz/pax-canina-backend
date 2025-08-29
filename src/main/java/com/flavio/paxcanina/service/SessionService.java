@@ -1,15 +1,15 @@
 package com.flavio.paxcanina.service;
 
-import com.flavio.paxcanina.dao.SessionDao;
-import com.flavio.paxcanina.dao.CourseDao;
-import com.flavio.paxcanina.dao.CoachDao;
 import com.flavio.paxcanina.dao.AgeGroupDao;
+import com.flavio.paxcanina.dao.CoachDao;
+import com.flavio.paxcanina.dao.CourseDao;
+import com.flavio.paxcanina.dao.SessionDao;
 import com.flavio.paxcanina.dto.SessionDto;
+import com.flavio.paxcanina.model.AgeGroup;
+import com.flavio.paxcanina.model.Coach;
+import com.flavio.paxcanina.model.Course;
 import com.flavio.paxcanina.model.Level;
 import com.flavio.paxcanina.model.Session;
-import com.flavio.paxcanina.model.Course;
-import com.flavio.paxcanina.model.Coach;
-import com.flavio.paxcanina.model.AgeGroup;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,11 +22,13 @@ import java.util.stream.Collectors;
 /**
  * SessionService
  * --------------
- * Handles business logic for CRUD and queries on sessions.
+ * Business logic for CRUD and queries on sessions.
  * Maps between Session and SessionDto.
- * - Public GET queries (no security)
- * - Create/Update/Delete: checked in Controller via @PreAuthorize
- * - Status always set, safe from null/empty edge cases
+ *
+ * Notes:
+ * - Public GET queries (no security here)
+ * - Create/Update/Delete: access checked in Controller via @PreAuthorize
+ * - Status fields in DTO are always populated, with null-safety
  */
 @Service
 public class SessionService {
@@ -36,61 +38,97 @@ public class SessionService {
     private final CoachDao coachDao;
     private final AgeGroupDao ageGroupDao;
 
-    public SessionService(
-            SessionDao sessionDao,
-            CourseDao courseDao,
-            CoachDao coachDao,
-            AgeGroupDao ageGroupDao
-    ) {
-        this.sessionDao = sessionDao;
-        this.courseDao = courseDao;
-        this.coachDao = coachDao;
-        this.ageGroupDao = ageGroupDao;
+    public SessionService(SessionDao sessionDao,
+                          CourseDao courseDao,
+                          CoachDao coachDao,
+                          AgeGroupDao ageGroupDao) {
+        this.sessionDao   = sessionDao;
+        this.courseDao    = courseDao;
+        this.coachDao     = coachDao;
+        this.ageGroupDao  = ageGroupDao;
     }
 
-    // Get all sessions (public)
+    /* =========================
+       Read (public, no auth)
+       ========================= */
+
+    /** List all sessions. */
     public List<SessionDto> findAll() {
-        return sessionDao.findAll().stream().map(this::toDto).collect(Collectors.toList());
+        return sessionDao.findAll()
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    // Find session by ID (public)
+    /** Get a session by its id. */
     public SessionDto findById(int id) {
         Session s = sessionDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
         return toDto(s);
     }
 
-    // Find sessions by course (public)
+    /** List sessions for a given course id. */
     public List<SessionDto> findByCourseId(Integer courseId) {
         return sessionDao.findByCourse_IdCourse(courseId)
-                .stream().map(this::toDto).collect(Collectors.toList());
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    // Find sessions by date (public)
+    /** List sessions for a specific date. */
     public List<SessionDto> findByDate(java.time.LocalDate date) {
-        return sessionDao.findByDate(date).stream().map(this::toDto).collect(Collectors.toList());
+        return sessionDao.findByDate(date)
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    // Find sessions by date range (public)
+    /** List sessions within a date range. */
     public List<SessionDto> findByDateBetween(java.time.LocalDate start, java.time.LocalDate end) {
-        return sessionDao.findByDateBetween(start, end).stream().map(this::toDto).collect(Collectors.toList());
+        return sessionDao.findByDateBetween(start, end)
+                .stream()
+                .map(this::toDto)
+                .collect(Collectors.toList());
     }
 
-    // Create session (admin/coach)
+    /** Create a new session (ADMIN/COACH). */
     @Transactional
     public SessionDto create(SessionDto dto) {
-        Session s = toEntity(dto);
+        Session s = toEntity(dto);   // resolves Course/Coach/AgeGroup or 404
+
+        // Date must be in the future
+        if (s.getDate() == null || !s.getDate().isAfter(java.time.LocalDate.now())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Date must be in the future");
+        }
+        // End time must be after start time (if provided)
+        if (s.getStartTime() != null && s.getEndTime() != null && !s.getEndTime().isAfter(s.getStartTime())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "End time must be after start time");
+        }
+        // Capacity must be positive
+        if (s.getMaxCapacity() == null || s.getMaxCapacity() <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Capacity must be positive");
+        }
+        // Coach must be authorized for the chosen course (specialization check if available)
+        if (s.getCourse() != null && s.getCoach() != null) {
+            var required = s.getCourse().getSpecializations();
+            var owned    = s.getCoach().getSpecializations();
+            if (required != null && !required.isEmpty()) {
+                boolean ok = (owned != null && !java.util.Collections.disjoint(owned, required));
+                if (!ok) throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Coach not authorized for this course");
+            }
+        }
+
         Session saved = sessionDao.save(s);
         return toDto(saved);
     }
 
-    // Update session (admin/coach)
+    /** Update an existing session (ADMIN/COACH). */
     @Transactional
     public SessionDto update(int id, SessionDto dto) {
         Session existing = sessionDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
 
-        // Update simple fields
+        // Simple fields
         existing.setDate(dto.getDate());
         existing.setLevel(dto.getLevel() != null ? Level.valueOf(dto.getLevel()) : null);
         existing.setStartTime(dto.getStartTime() != null ? LocalTime.parse(dto.getStartTime()) : null);
@@ -100,7 +138,7 @@ public class SessionService {
         existing.setLocation(dto.getLocation());
         existing.setImageUrl(dto.getImageUrl());
 
-        // Update relations (if values provided)
+        // Relations (only if provided)
         if (dto.getCourseId() != null) {
             Course course = courseDao.findById(dto.getCourseId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
@@ -121,13 +159,13 @@ public class SessionService {
         return toDto(saved);
     }
 
-    // Utility: find entity for internal use (not exposed as API)
+    /** Internal helper: fetch entity (404 if missing). */
     public Session findEntityById(Integer id) {
         return sessionDao.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Session not found"));
     }
 
-    // Delete session (admin/coach)
+    /** Delete a session (ADMIN/COACH). */
     @Transactional
     public void delete(int id) {
         Session existing = sessionDao.findById(id)
@@ -135,15 +173,17 @@ public class SessionService {
         sessionDao.delete(existing);
     }
 
-    // --- Mapping methods ---
+    /* =========================
+       Mapping helpers
+       ========================= */
 
     /**
-     * Maps Session entity to SessionDto.
-     * - Handles null safety for all fields.
-     * - Computes registrationsCount and status ("full"/"available") always.
+     * Map Session -> SessionDto.
+     * Handles null-safety and computes registrationsCount + status ("full"/"available").
      */
     private SessionDto toDto(Session s) {
         SessionDto dto = new SessionDto();
+
         dto.setIdSession(s.getIdSession());
         dto.setDate(s.getDate());
         dto.setLevel(s.getLevel() != null ? s.getLevel().name() : null);
@@ -159,12 +199,14 @@ public class SessionService {
             dto.setCourseId(s.getCourse().getIdCourse());
             dto.setCourseName(s.getCourse().getName());
         }
+
         // Coach
         if (s.getCoach() != null) {
             dto.setCoachId(s.getCoach().getIdUser());
             dto.setCoachLastName(s.getCoach().getLastName());
             dto.setCoachFirstName(s.getCoach().getFirstName());
         }
+
         // Age group
         if (s.getAgeGroup() != null) {
             dto.setAgeGroupId(s.getAgeGroup().getIdAgeGroup());
@@ -172,22 +214,24 @@ public class SessionService {
             dto.setMinAge(s.getAgeGroup().getMinAge());
             dto.setMaxAge(s.getAgeGroup().getMaxAge());
         }
-        // Registrations & Status - always set!
+
+        // Registrations & computed status (always set)
         int regCount = (s.getRegistrations() != null) ? s.getRegistrations().size() : 0;
         dto.setRegistrationsCount(regCount);
         dto.setStatus(
-                s.getMaxCapacity() != null && regCount >= s.getMaxCapacity()
-                        ? "full" : "available"
+                s.getMaxCapacity() != null && regCount >= s.getMaxCapacity() ? "full" : "available"
         );
+
         return dto;
     }
 
     /**
-     * Maps SessionDto to Session entity (for save/update).
-     * - Only sets relations if present.
+     * Map SessionDto -> Session.
+     * Resolves relations when ids are provided (throws 404 if missing).
      */
     private Session toEntity(SessionDto dto) {
         Session s = new Session();
+
         s.setIdSession(dto.getIdSession());
         s.setDate(dto.getDate());
         s.setLevel(dto.getLevel() != null ? Level.valueOf(dto.getLevel()) : null);
@@ -197,24 +241,28 @@ public class SessionService {
         s.setDescription(dto.getDescription());
         s.setLocation(dto.getLocation());
         s.setImageUrl(dto.getImageUrl());
-        // Set Course
+
+        // Course
         if (dto.getCourseId() != null) {
             Course course = courseDao.findById(dto.getCourseId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Course not found"));
             s.setCourse(course);
         }
-        // Set Coach
+
+        // Coach
         if (dto.getCoachId() != null) {
             Coach coach = coachDao.findById(dto.getCoachId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Coach not found"));
             s.setCoach(coach);
         }
-        // Set Age Group
+
+        // Age group
         if (dto.getAgeGroupId() != null) {
             AgeGroup ageGroup = ageGroupDao.findById(dto.getAgeGroupId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Age group not found"));
             s.setAgeGroup(ageGroup);
         }
+
         return s;
     }
 }

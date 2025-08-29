@@ -8,9 +8,13 @@ import java.time.LocalDate;
 @Setter
 public class RegistrationDto {
     private Integer id;
-    private String sessionName;
-    private String courseName;
-    private String dogName;
+    private Integer sessionId;
+    private Integer courseId;
+    private Integer dogId;
+    private String  sessionName;
+    private String  courseName;
+    private String  dogName;
     private LocalDate registrationDate;
-    private String status;
+    private String  status;
+
 }

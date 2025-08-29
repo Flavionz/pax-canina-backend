@@ -10,6 +10,4 @@ import java.util.Optional;
 public interface UserDao extends JpaRepository<User, Integer> {
     Optional<User> findByEmail(String email);
 
-    // New: find user by email AND emailVerified status (true or false)
-    Optional<User> findByEmailAndEmailVerified(String email, boolean emailVerified);
 }

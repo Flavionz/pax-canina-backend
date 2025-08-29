@@ -7,14 +7,6 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-
-/**
- * UserDto
- * -------
- * Safe DTO for admin dashboard & API.
- * - No passwordHash exposure
- * - Exposes account state flags (isActive, emailVerified, anonymizedAt)
- */
 @Getter @Setter
 public class UserDto {
 

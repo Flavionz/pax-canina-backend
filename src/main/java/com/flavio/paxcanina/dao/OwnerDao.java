@@ -33,7 +33,10 @@ public interface OwnerDao extends JpaRepository<Owner, Integer> {
            """)
     Optional<Owner> findByIdWithDogsAndRegistrations(@Param("id") Integer id);
 
-    // Optional convenience: since email lives in the base class (User),
-    // Spring Data can still derive this query correctly.
+
     boolean existsByEmail(String email);
 }
+
+
+
+

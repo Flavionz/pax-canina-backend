@@ -29,14 +29,8 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    /** Optional "from" address configured in application.properties; fallback to default if empty. */
     @Value("${mail.from:}")
     private String fromAddress;
-
-    /* ===================
-       Public entry points
-       =================== */
-
     public void sendAccountCreatedEmail(@NonNull String to,
                                         @NonNull String tempPassword,
                                         @NonNull String validationUrl) {

@@ -1,0 +1,49 @@
+version: '3.8'
+
+networks:
+  paxnet:
+    driver: bridge
+
+services:
+  frontend:
+    build: ./projet-fil-rouge-frontend-Flavionz
+    container_name: paxcanina-frontend-prod
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./uploads/public:/var/www/images:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - paxnet
+
+  backend:
+    build: ./projet-fil-rouge-backend-Flavionz
+    container_name: paxcanina-backend-prod
+    restart: always
+    expose:
+      - "8080"
+    env_file:
+      - .env.prod
+    volumes:
+      - ./uploads:/app/uploads
+    depends_on:
+      - mysql
+    networks:
+      - paxnet
+
+  mysql:
+    image: mysql:8.0
+    container_name: paxcanina-mysql-prod
+    restart: always
+    env_file:
+      - .env.prod
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    networks:
+      - paxnet
+
+volumes:
+  mysql_prod_data:

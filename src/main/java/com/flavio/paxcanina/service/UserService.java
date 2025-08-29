@@ -163,27 +163,22 @@ public class UserService {
             throw new IllegalStateException("user_anonymized");
         }
 
-        // 1) Check current password
         if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("invalid_current_password");
         }
 
-        // 2) Policy minimale: almeno 8, lettere+numeri (coerente con il front)
         if (!dto.getNewPassword().matches("^(?=.*[A-Za-z])(?=.*\\d).{8,}$")) {
             throw new IllegalArgumentException("weak_password");
         }
 
-        // 3) Evita riuso password
         if (passwordEncoder.matches(dto.getNewPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("same_password");
         }
 
-        // 4) Update hash + audit
         user.setPasswordHash(passwordEncoder.encode(dto.getNewPassword()));
         user.setLastPasswordChangeAt(LocalDateTime.now());
         userDao.save(user);
 
-        // 5) (Opzionale) email di notifica
         try {
             emailService.sendPasswordChangedEmail(user.getEmail());
         } catch (Exception ignored) {}

@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CourseDao extends JpaRepository<Course, Integer> {
-    // Here you can add custom queries if needed in the future
 }

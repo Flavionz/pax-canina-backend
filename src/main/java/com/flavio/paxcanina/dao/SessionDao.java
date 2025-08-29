@@ -13,3 +13,7 @@ public interface SessionDao extends JpaRepository<Session, Integer> {
     List<Session> findByDate(LocalDate date);
     List<Session> findByDateBetween(LocalDate start, LocalDate end);
 }
+
+
+
+

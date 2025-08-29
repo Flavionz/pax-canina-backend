@@ -30,7 +30,6 @@ import java.util.List;
  * - Public endpoints for registration, login, email verification, password reset
  * - Strict CORS for development (localhost) and production domain
  *
- * Jury-ready (2025).
  */
 @Configuration
 @EnableWebSecurity
@@ -95,6 +94,13 @@ public class SecurityConfig {
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET,  "/api/auth/verify-email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/resend-verification/**").permitAll()
+
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-resources/**",
+                                "/webjars/**"
+                        ).permitAll()
 
                         /* ======================
                            PASSWORD CHANGE (authenticated)

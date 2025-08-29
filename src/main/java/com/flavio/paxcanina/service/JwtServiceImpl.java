@@ -6,6 +6,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -19,11 +20,6 @@ import java.util.UUID;
 @Service
 public class JwtServiceImpl implements JwtService {
 
-    /**
-     * Base64-encoded HMAC secret (>= 256 bits).
-     * Example .env:
-     *   JWT_SECRET_BASE64=+DDfwrGZSVaPp64FWRK7fdJ0/AQYSvPNEmQafiTkI4k8bFeUBGPE7eesRUmdKFGRibZBmg+sF9t3s5IkPSF8XQ==
-     */
     @Value("${jwt.secret}")
     private String jwtSecretBase64;
 
@@ -49,7 +45,7 @@ public class JwtServiceImpl implements JwtService {
     @Override
     public String getRole(AppUserDetails userDetails) {
         return userDetails.getAuthorities().stream()
-                .map(a -> a.getAuthority())
+                .map(GrantedAuthority::getAuthority)
                 .findFirst()
                 .orElse(null);
     }
@@ -59,21 +55,21 @@ public class JwtServiceImpl implements JwtService {
         final String effectiveRole = (role != null ? role : getRole(userDetails));
 
         final Instant now = Instant.now();
-        final Instant nbf = now.minusSeconds(5);                // small negative skew for edge devices
-        final Instant exp = now.plusSeconds(accessExpSeconds);  // access token TTL
+        final Instant nbf = now.minusSeconds(5);
+        final Instant exp = now.plusSeconds(accessExpSeconds);
 
         return Jwts.builder()
-                .header()                              // 0.12.x header builder (no deprecations)
+                .header()
                 .type("JWT")
                 .and()
                 .subject(userDetails.getUsername())
                 .issuer(issuer)
-                .audience().add(audience).and()        // single audience value
+                .audience().add(audience).and()
                 .issuedAt(Date.from(now))
                 .notBefore(Date.from(nbf))
                 .expiration(Date.from(exp))
-                .id(UUID.randomUUID().toString())      // jti for audit
-                .claims(Map.of("role", effectiveRole)) // custom claims
+                .id(UUID.randomUUID().toString())
+                .claims(Map.of("role", effectiveRole))
                 .signWith(getSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
@@ -88,18 +84,11 @@ public class JwtServiceImpl implements JwtService {
         try {
             Claims c = parseClaims(jwt);
 
-            // subject match
             String username = c.getSubject();
             if (username == null || !username.equals(userDetails.getUsername())) return false;
-
-            // expiry guard (parser also checks, but we keep it explicit)
             Date exp = c.getExpiration();
             if (exp == null || exp.before(new Date())) return false;
-
-            // issuer check (parser also enforces via requireIssuer)
             if (!issuer.equals(c.getIssuer())) return false;
-
-            // audience check (aud may be a single string or a list)
             Object aud = c.get("aud");
             if (aud instanceof String) {
                 if (!audience.equals(aud)) return false;

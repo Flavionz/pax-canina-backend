@@ -7,4 +7,5 @@ import com.flavio.paxcanina.model.Session;
 public interface RegistrationService {
     Registration save(Registration registration);
     boolean existsBySessionAndDog(Session session, Dog dog);
+    Registration registerDogToSession(Integer ownerIdUser, Integer dogId, Integer sessionId);
 }

@@ -22,11 +22,9 @@ public class Specialization {
     @Column(name = "description")
     private String description;
 
-    // A specialization can be linked to many coaches
     @ManyToMany(mappedBy = "specializations")
     private Set<Coach> coaches;
 
-    // A specialization can be linked to many courses
     @ManyToMany(mappedBy = "specializations")
     private Set<Course> courses;
 

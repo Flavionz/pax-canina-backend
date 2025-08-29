@@ -41,10 +41,6 @@ import java.util.UUID;
 @CrossOrigin(origins = "http://localhost:4200")
 @RequiredArgsConstructor
 public class AuthController {
-
-    // ======================
-    // Dependencies
-    // ======================
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -53,9 +49,6 @@ public class AuthController {
     private final ValidationTokenDao validationTokenDao;
     private final EmailService emailService;
 
-    // ======================
-    // REGISTRATION (Owner)
-    // ======================
     @PostMapping("/register/owner")
     public ResponseEntity<?> registerOwner(@RequestBody @Valid OwnerRegistrationDto dto) {
         Owner owner = new Owner();
@@ -72,9 +65,6 @@ public class AuthController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
-    // =============
-    // LOGIN (JWT)
-    // =============
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest loginRequest) {
         try {
@@ -93,9 +83,6 @@ public class AuthController {
         }
     }
 
-    // ======================================
-    // EMAIL VERIFICATION (Token-based)
-    // ======================================
     @GetMapping("/verify-email")
     public ResponseEntity<?> verifyEmail(@RequestParam("token") String token) {
         boolean ok = userService.verifyUserEmail(token);
@@ -112,9 +99,7 @@ public class AuthController {
                 : ResponseEntity.badRequest().body(Map.of("error", "utilisateur_introuvable_ou_deja_verifie"));
     }
 
-    // ======================================
-    // PASSWORD RESET (unauthenticated flow)
-    // ======================================
+
 
     /**
      * Step 1: Ask for a reset link.
@@ -127,7 +112,6 @@ public class AuthController {
         if (opt.isPresent() && opt.get().getAnonymizedAt() == null) {
             User user = opt.get();
 
-            // one-time token (30 min validity)
             String rawToken = UUID.randomUUID().toString();
             ValidationToken vt = ValidationToken.passwordReset(
                     user,
@@ -141,7 +125,6 @@ public class AuthController {
             log.info("[AuthController] Password reset link sent to {}", user.getEmail());
         }
 
-        // Same UX regardless of account existence
         return ResponseEntity.ok(Map.of(
                 "message", "Si un compte existe pour cette adresse, vous recevrez un e-mail avec les instructions."
         ));
@@ -188,11 +171,6 @@ public class AuthController {
         log.info("[AuthController] Password successfully reset for {}", user.getEmail());
         return ResponseEntity.ok(Map.of("message", "Mot de passe mis à jour"));
     }
-
-    // ======================================
-    // CHANGE PASSWORD (authenticated flow)
-    // ======================================
-
     /**
      * Authenticated password change:
      *  - verifies current password
@@ -240,7 +218,6 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("message", "Mot de passe modifié avec succès"));
     }
 
-    // ===== JWT response DTO (simple and explicit) =====
     @Getter
     public static class JwtResponse {
         public String token;

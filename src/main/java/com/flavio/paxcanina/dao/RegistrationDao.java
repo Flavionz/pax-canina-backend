@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface RegistrationDao extends JpaRepository<Registration, Integer> {
     boolean existsBySessionAndDog(Session session, Dog dog);
+    int countBySession(Session session);
 }

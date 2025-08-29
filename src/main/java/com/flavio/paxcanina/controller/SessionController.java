@@ -2,6 +2,7 @@ package com.flavio.paxcanina.controller;
 
 import com.flavio.paxcanina.dto.SessionDto;
 import com.flavio.paxcanina.service.SessionService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -84,7 +85,7 @@ public class SessionController {
      */
     @PreAuthorize("hasAnyRole('ADMIN', 'COACH')")
     @PostMapping
-    public ResponseEntity<SessionDto> createSession(@RequestBody SessionDto dto) {
+    public ResponseEntity<SessionDto> createSession(@Valid @RequestBody SessionDto dto) {
         SessionDto created = sessionService.create(dto);
         return ResponseEntity.status(201).body(created);
     }

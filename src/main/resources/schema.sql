@@ -13,9 +13,9 @@ CREATE TABLE IF NOT EXISTS user (
     bio TEXT,
     last_login DATETIME,
     email_verified BOOLEAN NOT NULL DEFAULT false,
-    is_active BOOLEAN NOT NULL DEFAULT true,                -- NEW
-    anonymized_at DATETIME NULL,                             -- NEW
-    last_password_change_at DATETIME NULL                    -- NEW
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    anonymized_at DATETIME NULL,
+    last_password_change_at DATETIME NULL
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS admin (

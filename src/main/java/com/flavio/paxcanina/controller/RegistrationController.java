@@ -2,49 +2,44 @@ package com.flavio.paxcanina.controller;
 
 import com.flavio.paxcanina.dto.RegistrationDto;
 import com.flavio.paxcanina.dto.RegistrationRequestDto;
+import com.flavio.paxcanina.exception.BusinessException;
+import com.flavio.paxcanina.exception.NotFoundException;
 import com.flavio.paxcanina.mapper.RegistrationMapper;
-import com.flavio.paxcanina.model.*;
+import com.flavio.paxcanina.model.Owner;
+import com.flavio.paxcanina.model.Registration;
 import com.flavio.paxcanina.security.AppUserDetails;
-import com.flavio.paxcanina.service.DogService;
 import com.flavio.paxcanina.service.RegistrationService;
-import com.flavio.paxcanina.service.SessionService;
-import com.flavio.paxcanina.service.OwnerService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * RegistrationController
  * ---------------------
- * Handles dog registration to training sessions.
- * Uses a dedicated Mapper to avoid cyclic references in JSON serialization.
- * Jury-ready / prod-ready / 2025 best practice.
+ * Thin REST controller delegating domain rules to the service layer:
+ * - Ownership, duplicate, capacity, age eligibility are enforced server-side in RegistrationService.
+ * - Consistent JSON error payloads via @ExceptionHandler.
  */
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/sessions")
 @CrossOrigin(origins = "http://localhost:4200")
 public class RegistrationController {
 
     private final RegistrationService registrationService;
-    private final DogService dogService;
-    private final SessionService sessionService;
-
-    public RegistrationController(
-            RegistrationService registrationService,
-            DogService dogService,
-            SessionService sessionService,
-            OwnerService ownerService // not used here, can be removed if unused elsewhere
-    ) {
-        this.registrationService = registrationService;
-        this.dogService = dogService;
-        this.sessionService = sessionService;
-    }
 
     /**
-     * Registers a dog to a session.
-     * Returns a flat RegistrationDto via RegistrationMapper.
+     * Registers an owner's dog to a session.
+     * Path keeps your existing route for frontend compatibility:
+     *   POST /api/sessions/{sessionId}/registration
+     *
+     * Body:  { "dogId": number }
+     * Auth:  Owner only (enforced here for role, domain rules in service)
+     *
+     * Returns: RegistrationDto (flat), 201 Created on success.
      */
     @PostMapping("/{sessionId}/registration")
     public ResponseEntity<?> registerDogToSession(
@@ -52,42 +47,55 @@ public class RegistrationController {
             @RequestBody RegistrationRequestDto request,
             Authentication authentication
     ) {
+        // Extract authenticated user
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
-        User user = userDetails.getUser();
 
-        // Only owners can register their dogs
-        if (!(user instanceof Owner owner)) {
-            return ResponseEntity.status(403).body("Only owners can register dogs");
+        // Only owners can register dogs
+        if (!(userDetails.getUser() instanceof Owner owner)) {
+            // Security error (not a business rule)
+            return ResponseEntity.status(403).body(Map.of(
+                    "error", "FORBIDDEN",
+                    "message", "Only owners can register dogs"
+            ));
         }
 
-        // Check dog ownership
-        Dog dog = dogService.findById(request.getDogId());
-        if (dog == null || !dog.getOwner().getIdUser().equals(owner.getIdUser())) {
-            return ResponseEntity.status(403).body("Dog does not belong to this owner");
-        }
+        // Delegate the full use case to the service (ownership is re-checked inside)
+        Registration reg = registrationService.registerDogToSession(
+                owner.getIdUser(),
+                request.getDogId(),
+                sessionId
+        );
 
-        // Check session existence
-        Session session = sessionService.findEntityById(sessionId);
-        if (session == null) {
-            return ResponseEntity.notFound().build();
-        }
+        // Map to flat DTO (no cycles)
+        RegistrationDto dto = RegistrationMapper.toDto(reg);
 
-        // Check if already registered
-        if (registrationService.existsBySessionAndDog(session, dog)) {
-            return ResponseEntity.status(409).body("Dog already registered for this session");
-        }
-
-        // Create and save registration
-        Registration reg = new Registration();
-        reg.setDog(dog);
-        reg.setSession(session);
-        reg.setRegistrationDate(LocalDate.now());
-        reg.setStatus("REGISTERED");
-        Registration saved = registrationService.save(reg);
-
-        // Use the mapper to avoid cyclic references
-        RegistrationDto dto = RegistrationMapper.toDto(saved);
-
+        // 201 Created makes sense for a new registration
         return ResponseEntity.status(201).body(dto);
+    }
+
+    /* ------------------------------
+       Unified error handling
+       ------------------------------ */
+
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<?> handleBusiness(BusinessException ex) {
+        // e.g. 422 for domain rule violations, 409 if you ever map conflicts, etc.
+        return ResponseEntity.status(ex.getStatus()).body(
+                Map.of(
+                        "error", ex.getErrorCode(),
+                        "message", ex.getMessage(),
+                        "details", ex.getDetails()
+                )
+        );
+    }
+
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity<?> handleNotFound(NotFoundException ex) {
+        return ResponseEntity.status(404).body(
+                Map.of(
+                        "error", ex.getErrorCode(),
+                        "message", "Resource not found"
+                )
+        );
     }
 }
