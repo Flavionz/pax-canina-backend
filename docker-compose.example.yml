@@ -4,10 +4,10 @@ services:
     container_name: paxcanina-mysql
     restart: always
     environment:
-      MYSQL_DATABASE: paxcanina_db
-      MYSQL_USER: paxuser
-      MYSQL_PASSWORD: paxpw
-      MYSQL_ROOT_PASSWORD: rootpw
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -20,8 +20,8 @@ services:
       - "8081:80"
     environment:
       PMA_HOST: mysql
-      PMA_USER: paxuser
-      PMA_PASSWORD: paxpw
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
     depends_on:
       - mysql
 
@@ -47,8 +47,8 @@ services:
       - "1080:1080"
       - "1025:1025"
     environment:
-      - MAILDEV_INCOMING_USER=
-      - MAILDEV_INCOMING_PASS=
+      - MAILDEV_INCOMING_USER=${MAILDEV_INCOMING_USER}
+      - MAILDEV_INCOMING_PASS=${MAILDEV_INCOMING_PASS}
 
 volumes:
   mysql_data:
