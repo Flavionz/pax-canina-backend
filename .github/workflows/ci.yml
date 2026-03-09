@@ -19,31 +19,11 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
+          java-version: '17'
           cache: maven
 
       - name: Build backend with Maven
-        run: mvn -B clean package -DskipTests --file projet-fil-rouge-backend-Flavionz/pom.xml
+        run: mvn -B clean package -DskipTests --file pom.xml
 
       - name: Run backend tests
-        run: mvn test --file projet-fil-rouge-backend-Flavionz/pom.xml
-
-  build-frontend:
-    name: Build Frontend Angular
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install dependencies
-        working-directory: projet-fil-rouge-frontend-Flavionz
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: projet-fil-rouge-frontend-Flavionz
-        run: npm run build -- --configuration=production
+        run: mvn test --file pom.xml
