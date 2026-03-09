@@ -49,37 +49,30 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Transactional
     @Override
     public Registration registerDogToSession(Integer ownerIdUser, Integer dogId, Integer sessionId) {
-        // 1) Ownership
+
         Dog dog = dogDao.findById(dogId)
                 .orElseThrow(() -> new NotFoundException("DOG_NOT_FOUND"));
 
-        if (dog.getOwner() == null || dog.getOwner().getIdUser() == null
+        if (dog.getOwner() == null
+                || dog.getOwner().getIdUser() == null
                 || !dog.getOwner().getIdUser().equals(ownerIdUser)) {
-            // Hide existence of resources not owned by the caller (security by design).
             throw new NotFoundException("DOG_NOT_FOUND_OR_NOT_OWNED");
         }
 
-        // 2) Session existence
         Session session = sessionDao.findById(sessionId)
                 .orElseThrow(() -> new NotFoundException("SESSION_NOT_FOUND"));
 
-        // 3) Duplicate registration
-        if (registrationDao.existsBySessionAndDog(session, dog)) {
-            throw new BusinessException("ALREADY_REGISTERED", 422);
+        if (this.existsBySessionAndDog(session, dog)) {
+            throw new BusinessException("ALREADY_REGISTERED", 409);
         }
 
-        // 4) Capacity
-        Integer maxCapacity = session.getMaxCapacity(); // nullable in your model
+        Integer maxCapacity = session.getMaxCapacity();
         int currentRegistrations = registrationDao.countBySession(session);
         if (maxCapacity != null && currentRegistrations >= maxCapacity) {
             throw new BusinessException("SESSION_FULL", 422);
         }
 
-        // 5) Age eligibility (calculate age at the session date, not "today")
-        LocalDate referenceDate = session.getDate();
-        if (referenceDate == null) {
-            referenceDate = LocalDate.now();
-        }
+        LocalDate referenceDate = session.getDate() != null ? session.getDate() : LocalDate.now();
 
         AgeGroup group = session.getAgeGroup();
         if (group == null) {
@@ -93,19 +86,18 @@ public class RegistrationServiceImpl implements RegistrationService {
         boolean eligible = ageEligibilityService.isEligible(dogAgeMonthsAtSession, minMonths, maxMonths);
 
         if (!eligible) {
-            String code = (minMonths != null && dogAgeMonthsAtSession < minMonths) ? "DOG_TOO_YOUNG" : "DOG_TOO_OLD";
+            String code = (minMonths != null && dogAgeMonthsAtSession < minMonths)
+                    ? "DOG_TOO_YOUNG" : "DOG_TOO_OLD";
             throw new BusinessException(code, 422)
                     .withDetail("ageMonths", dogAgeMonthsAtSession)
                     .withDetail("minMonths", minMonths)
                     .withDetail("maxMonths", maxMonths);
         }
 
-        // 6) Persist Registration
         Registration reg = new Registration();
         reg.setDog(dog);
         reg.setSession(session);
-        reg.setRegistrationDate(LocalDate.now()); // audit-friendly and useful for reports
-        // reg.setStatus("CONFIRMED"); // set if you manage a status workflow
+        reg.setRegistrationDate(LocalDate.now());
 
         return registrationDao.save(reg);
     }

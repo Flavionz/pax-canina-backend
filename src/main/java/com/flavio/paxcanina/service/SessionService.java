@@ -67,7 +67,6 @@ public class SessionService {
         return toDto(s);
     }
 
-    /** List sessions for a given course id. */
     public List<SessionDto> findByCourseId(Integer courseId) {
         return sessionDao.findByCourse_IdCourse(courseId)
                 .stream()
@@ -75,7 +74,6 @@ public class SessionService {
                 .collect(Collectors.toList());
     }
 
-    /** List sessions for a specific date. */
     public List<SessionDto> findByDate(java.time.LocalDate date) {
         return sessionDao.findByDate(date)
                 .stream()
@@ -83,12 +81,12 @@ public class SessionService {
                 .collect(Collectors.toList());
     }
 
-    /** List sessions within a date range. */
     public List<SessionDto> findByDateBetween(java.time.LocalDate start, java.time.LocalDate end) {
         return sessionDao.findByDateBetween(start, end)
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+
     }
 
     /** Create a new session (ADMIN/COACH). */
@@ -215,7 +213,7 @@ public class SessionService {
             dto.setMaxAge(s.getAgeGroup().getMaxAge());
         }
 
-        // Registrations & computed status (always set)
+        // Registrations & computed status
         int regCount = (s.getRegistrations() != null) ? s.getRegistrations().size() : 0;
         dto.setRegistrationsCount(regCount);
         dto.setStatus(

@@ -47,29 +47,23 @@ public class RegistrationController {
             @RequestBody RegistrationRequestDto request,
             Authentication authentication
     ) {
-        // Extract authenticated user
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
 
-        // Only owners can register dogs
         if (!(userDetails.getUser() instanceof Owner owner)) {
-            // Security error (not a business rule)
             return ResponseEntity.status(403).body(Map.of(
                     "error", "FORBIDDEN",
                     "message", "Only owners can register dogs"
             ));
         }
 
-        // Delegate the full use case to the service (ownership is re-checked inside)
         Registration reg = registrationService.registerDogToSession(
                 owner.getIdUser(),
                 request.getDogId(),
                 sessionId
         );
 
-        // Map to flat DTO (no cycles)
         RegistrationDto dto = RegistrationMapper.toDto(reg);
 
-        // 201 Created makes sense for a new registration
         return ResponseEntity.status(201).body(dto);
     }
 

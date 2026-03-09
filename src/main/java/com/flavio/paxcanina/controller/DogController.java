@@ -1,5 +1,6 @@
 package com.flavio.paxcanina.controller;
 
+import com.flavio.paxcanina.dto.DogAdminListDto;
 import com.flavio.paxcanina.dto.DogDto;
 import com.flavio.paxcanina.model.User;
 import com.flavio.paxcanina.security.AppUserDetails;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST controller for managing user's dogs (CRUD for the authenticated owner).
+ * REST controller for managing dogs.
  */
 @RestController
 @RequestMapping("/api/dogs")
@@ -37,13 +38,14 @@ public class DogController {
         return ResponseEntity.ok(dtos);
     }
 
+    /**
+     * GET admin list of all dogs (includes ownerName & breedName).
+     */
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ResponseEntity<List<DogDto>> getAllDogs() {
-        List<DogDto> dtos = dogService.findAll();
-        return ResponseEntity.ok(dtos);
+    public ResponseEntity<List<DogAdminListDto>> getAllDogs() {
+        return ResponseEntity.ok(dogService.findAllForAdmin());
     }
-
-
 
     /**
      * POST a new dog for the authenticated owner.
@@ -65,7 +67,7 @@ public class DogController {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
         Integer ownerId = user.getIdUser();
-        if (!dogService.isDogOwnedBy(dogId, ownerId)) {
+        if (dogService.isDogOwnedBy(dogId, ownerId)) {
             return ResponseEntity.status(403).build();
         }
         DogDto updated = dogService.updateDog(dogId, dto);
@@ -80,7 +82,7 @@ public class DogController {
         AppUserDetails userDetails = (AppUserDetails) authentication.getPrincipal();
         User user = userDetails.getUser();
         Integer ownerId = user.getIdUser();
-        if (!dogService.isDogOwnedBy(dogId, ownerId)) {
+        if (dogService.isDogOwnedBy(dogId, ownerId)) {
             return ResponseEntity.status(403).build();
         }
         dogService.deleteDog(dogId);

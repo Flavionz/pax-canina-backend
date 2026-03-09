@@ -2,6 +2,8 @@ package com.flavio.paxcanina.service;
 
 import com.flavio.paxcanina.dto.DogDto;
 import com.flavio.paxcanina.model.Dog;
+import com.flavio.paxcanina.dto.DogAdminListDto;
+
 
 import java.util.List;
 
@@ -14,6 +16,8 @@ public interface DogService {
     Dog findById(Integer id);
 
     List<DogDto> findAll();
+
+    List<DogAdminListDto> findAllForAdmin();
 
 
 

@@ -53,7 +53,6 @@ public class Dog {
     @JoinColumn(name = "id_breed")
     private Breed breed;
 
-    /** Use Set to avoid "bag" and permettere più fetch-join simultanei. */
     @OneToMany(mappedBy = "dog", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Registration> registrations = new LinkedHashSet<>();
 

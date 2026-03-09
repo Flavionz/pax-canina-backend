@@ -32,8 +32,7 @@ public class TheDogApiBreedImporterService implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // Scarica le razze solo se il database è vuoto!
-        if (breedRepository.count() > 0) return;
+
         importBreedsFromApi();
     }
 

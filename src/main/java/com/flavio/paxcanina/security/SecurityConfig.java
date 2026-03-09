@@ -102,22 +102,16 @@ public class SecurityConfig {
                                 "/webjars/**"
                         ).permitAll()
 
-                        /* ======================
-                           PASSWORD CHANGE (authenticated)
-                           ====================== */
+
                         .requestMatchers(HttpMethod.POST, "/api/auth/change-password").authenticated()
 
-                        /* ======================
-                           BREEDS (GET public, CRUD admin)
-                           ====================== */
+
                         .requestMatchers(HttpMethod.GET, "/api/breeds", "/api/breeds/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/breeds/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT,  "/api/breeds/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE,"/api/breeds/**").hasRole("ADMIN")
 
-                        /* ======================
-                           COURSES (GET public, CRUD admin)
-                           ====================== */
+
                         .requestMatchers(HttpMethod.GET, "/api/courses/for-coach/me").hasRole("COACH")
                         .requestMatchers(HttpMethod.GET, "/api/courses", "/api/courses/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/courses/**").hasRole("ADMIN")
@@ -193,10 +187,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Development
         config.setAllowedOrigins(List.of("http://localhost:4200"));
-        // Production example:
-        // config.setAllowedOrigins(List.of("https://www.paxcanina.fr"));
+
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
