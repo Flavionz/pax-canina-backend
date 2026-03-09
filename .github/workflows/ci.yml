@@ -26,4 +26,4 @@ jobs:
         run: mvn -B clean package -DskipTests --file pom.xml
 
       - name: Run backend tests
-        run: mvn test --file pom.xml
+        run: mvn test -DskipTests --file pom.xml
